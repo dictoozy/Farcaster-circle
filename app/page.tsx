@@ -1,4 +1,4 @@
-// FINAL, VERCEL-READY VERSION: Fixes the fatal syntax error in the Image components.
+// FINAL, VERCEL-READY VERSION: Fixes the critical syntax error from the previous build.
 'use client';
 
 import { useState, useRef } from 'react';
@@ -10,7 +10,7 @@ import Image from 'next/image';
 
 declare global {
   interface Window {
-    ethereum?: unknown;
+    ethereum?: any;
   }
 }
 
@@ -27,7 +27,8 @@ interface ApiResponse {
 }
 
 export default function HomePage() {
-  const [fname, setFname] useState('');
+  // This line is now syntactically correct
+  const [fname, setFname] = useState('');
   const [data, setData] = useState<ApiResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,9 +38,11 @@ export default function HomePage() {
 
   const circleRef = useRef<HTMLDivElement>(null);
 
+  // Remember to paste your deployed testnet address here
   const contractAddress = 'YOUR_DEPLOYED_CONTRACT_ADDRESS_HERE'; 
   
   const contractAbi = parseAbi([
+      // This must match the function in your deployed contract
       'function mint(string memory uri) external'
   ]);
 
@@ -83,7 +86,7 @@ export default function HomePage() {
   const connectWallet = async () => {
     if (typeof window.ethereum !== 'undefined') {
         try {
-            const [address] = await (window.ethereum as any).request({ method: 'eth_requestAccounts' });
+            const [address] = await window.ethereum.request({ method: 'eth_requestAccounts' });
             return createWalletClient({
                 account: address as `0x${string}`,
                 chain: base,
@@ -225,9 +228,6 @@ const SuccessMessage = ({ txHash }: { txHash: string }) => {
     );
 };
 
-// ==================================================================
-// THIS SECTION HAS BEEN COMPLETELY REBUILT TO FIX THE VERCEL ERROR
-// ==================================================================
 const CircleVisualization = ({ data }: { data: ApiResponse }) => {
     const totalSize = 450;
     const centerPfpSize = 80;
