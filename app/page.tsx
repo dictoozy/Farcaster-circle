@@ -1,5 +1,5 @@
 // FINAL, VERCEL-READY VERSION: Fixes all syntax and linting errors.
-'use-client';
+'use client';
 
 import { useState, useRef } from 'react';
 import { createPublicClient, createWalletClient, http, custom, parseAbi } from 'viem';
