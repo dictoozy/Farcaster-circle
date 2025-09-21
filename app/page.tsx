@@ -1,4 +1,4 @@
-// FINAL, VERCEL-READY VERSION: Fixes the critical syntax error from the previous build.
+// FINAL, VERCEL-READY VERSION: Fixes all TypeScript linting errors.
 'use client';
 
 import { useState, useRef } from 'react';
@@ -10,7 +10,10 @@ import Image from 'next/image';
 
 declare global {
   interface Window {
-    ethereum?: any;
+    // This satisfies Vercel's strict type checker by being more specific
+    ethereum?: {
+        request: (args: { method: string; }) => Promise<`0x${string}`[]>;
+    };
   }
 }
 
@@ -27,7 +30,6 @@ interface ApiResponse {
 }
 
 export default function HomePage() {
-  // This line is now syntactically correct
   const [fname, setFname] = useState('');
   const [data, setData] = useState<ApiResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -38,11 +40,10 @@ export default function HomePage() {
 
   const circleRef = useRef<HTMLDivElement>(null);
 
-  // Remember to paste your deployed testnet address here
+  // You should have your testnet address here for now
   const contractAddress = 'YOUR_DEPLOYED_CONTRACT_ADDRESS_HERE'; 
   
   const contractAbi = parseAbi([
-      // This must match the function in your deployed contract
       'function mint(string memory uri) external'
   ]);
 
@@ -92,7 +93,7 @@ export default function HomePage() {
                 chain: base,
                 transport: custom(window.ethereum)
             });
-        } catch (err) {
+        } catch (err) { // err is intentionally unused here, but we need the catch block
             setError("Failed to connect wallet. Please try again.");
             return null;
         }
@@ -245,6 +246,7 @@ const CircleVisualization = ({ data }: { data: ApiResponse }) => {
                     width={centerPfpSize}
                     height={centerPfpSize}
                     className="rounded-full border-4 border-purple-500"
+                    priority
                 />
             </div>
             {data.innerCircle.map((follower, index) => {
