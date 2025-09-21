@@ -1,5 +1,5 @@
 // FINAL, VERCEL-READY VERSION: Fixes all syntax and linting errors.
-'use client';
+'use-client';
 
 import { useState, useRef } from 'react';
 import { createPublicClient, createWalletClient, http, custom, parseAbi } from 'viem';
@@ -10,7 +10,10 @@ import Image from 'next/image';
 
 declare global {
   interface Window {
-    ethereum?: any;
+    // This satisfies Vercel's strict type checker
+    ethereum?: {
+        request: (args: { method: string; }) => Promise<`0x${string}`[]>;
+    };
   }
 }
 
@@ -92,7 +95,7 @@ export default function HomePage() {
                 chain: base,
                 transport: custom(window.ethereum)
             });
-        } catch (_err) { 
+        } catch (_err) { // Error is intentionally unused
             setError("Failed to connect wallet. Please try again.");
             return null;
         }
