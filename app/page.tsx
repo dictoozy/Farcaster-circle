@@ -1,4 +1,4 @@
-// FINAL VERSION: Added a line to remove the '@' symbol from usernames before API call.
+// FINAL, VERCEL-READY VERSION: Fixes all TypeScript errors and performance warnings.
 'use client';
 
 import { useState, useRef } from 'react';
@@ -6,6 +6,7 @@ import { createPublicClient, createWalletClient, http, custom, parseAbi } from '
 import { base } from 'viem/chains';
 import { Web3Storage } from 'web3.storage';
 import { toPng } from 'html-to-image';
+import Image from 'next/image'; // Import the Next.js Image component
 
 declare global {
   interface Window {
@@ -13,7 +14,6 @@ declare global {
   }
 }
 
-// --- Type Definitions for API data ---
 interface User {
   pfp_url: string;
   username: string;
@@ -26,7 +26,6 @@ interface ApiResponse {
   outerCircle: User[];
 }
 
-// --- Main App Component ---
 export default function HomePage() {
   const [fname, setFname] = useState('');
   const [data, setData] = useState<ApiResponse | null>(null);
@@ -38,10 +37,11 @@ export default function HomePage() {
 
   const circleRef = useRef<HTMLDivElement>(null);
 
-  const contractAddress = 'YOUR_DEPLOYED_CONTRACT_ADDRESS_HERE';
+  // You should have your testnet address here for now
+  const contractAddress = 'YOUR_DEPLOYED_CONTRACT_ADDRESS_HERE'; 
   
   const contractAbi = parseAbi([
-      'function mintCircle(string memory uri) external'
+      'function mint(string memory uri) external'
   ]);
 
   const generateCircle = async () => {
@@ -54,14 +54,13 @@ export default function HomePage() {
     setData(null);
     setMintSuccessTx(null);
 
-    // THIS IS THE FIX: We remove the '@' if the user includes it.
     const sanitizedFname = fname.startsWith('@') ? fname.substring(1) : fname;
 
     try {
       const response = await fetch('/api/followers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fname: sanitizedFname }), // We send the sanitized name
+        body: JSON.stringify({ fname: sanitizedFname }),
       });
 
       if (!response.ok) {
@@ -71,8 +70,12 @@ export default function HomePage() {
 
       const result: ApiResponse = await response.json();
       setData(result);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) { // Use 'unknown' for better type safety
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An unknown error occurred.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -103,7 +106,7 @@ export default function HomePage() {
         return;
     }
      if (!process.env.NEXT_PUBLIC_WEB3_STORAGE_TOKEN) {
-        setError("Web3.Storage API token is not configured. Please check your environment variables.");
+        setError("Web3.Storage API token is not configured.");
         return;
     }
 
@@ -142,16 +145,19 @@ export default function HomePage() {
         const { request } = await publicClient.simulateContract({
             address: contractAddress as `0x${string}`,
             abi: contractAbi,
-            functionName: 'mintCircle',
+            functionName: 'mint',
             args: [metadataUrl], 
             account: address,
         });
         const txHash = await walletClient.writeContract(request);
         setMintSuccessTx(txHash);
 
-    } catch (err: any) {
-        console.error(err);
-        setError(err.message || "An unexpected error occurred during minting.");
+    } catch (err: unknown) {
+        if (err instanceof Error) {
+            setError(err.message);
+        } else {
+            setError("An unknown error occurred during minting.");
+        }
     } finally {
         setIsMinting(false);
     }
@@ -204,7 +210,6 @@ export default function HomePage() {
   );
 }
 
-// --- UI Components ---
 const Spinner = () => <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500"></div>;
 const ErrorMessage = ({ message }: { message: string }) => <div className="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg max-w-md"><p className="font-semibold">Error:</p><p className="text-sm">{message}</p></div>;
 
@@ -224,20 +229,19 @@ const SuccessMessage = ({ txHash }: { txHash: string }) => {
 const CircleVisualization = ({ data }: { data: ApiResponse }) => {
     const totalSize = 450;
     const centerPfpSize = 80;
-    
     const innerCirclePfpSize = 50;
     const innerRadius = 120;
-
     const outerCirclePfpSize = 40;
     const outerRadius = 200;
 
     return (
         <div className="relative rounded-full bg-gray-900" style={{ width: `${totalSize}px`, height: `${totalSize}px` }}>
-            <img
+            <Image
                 src={data.mainUser.pfp_url}
                 alt={data.mainUser.display_name}
+                width={centerPfpSize}
+                height={centerPfpSize}
                 className="rounded-full border-4 border-purple-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20"
-                style={{ width: `${centerPfpSize}px`, height: `${centerPfpSize}px` }}
                 onError={(e) => (e.currentTarget.src = `https://placehold.co/${centerPfpSize}x${centerPfpSize}/111827/a855f7?text=${data.mainUser.username.charAt(0)}`)}
             />
             {data.innerCircle.map((follower, index) => {
@@ -257,17 +261,13 @@ const CircleVisualization = ({ data }: { data: ApiResponse }) => {
 };
 
 const Pfp = ({ user, size, x, y }: { user: User, size: number, x: number, y: number }) => (
-    <img
+    <Image
         src={user.pfp_url}
         alt={user.username}
+        width={size}
+        height={size}
         title={user.display_name}
         className="rounded-full border-2 border-gray-600 absolute z-10"
-        style={{
-            width: `${size}px`,
-            height: `${size}px`,
-            left: `${x}px`,
-            top: `${y}px`,
-        }}
         onError={(e) => (e.currentTarget.src = `https://placehold.co/${size}x${size}/1f2937/ffffff?text=${user.username.charAt(0)}`)}
     />
 );
