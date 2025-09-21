@@ -1,4 +1,4 @@
-// FINAL, VERCEL-READY VERSION: Fixes all TypeScript errors and a critical bug.
+// FINAL, VERCEL-READY VERSION: Fixes the fatal syntax error in the Image components.
 'use client';
 
 import { useState, useRef } from 'react';
@@ -10,7 +10,6 @@ import Image from 'next/image';
 
 declare global {
   interface Window {
-    // This satisfies Vercel's strict type checker
     ethereum?: unknown;
   }
 }
@@ -28,7 +27,7 @@ interface ApiResponse {
 }
 
 export default function HomePage() {
-  const [fname, setFname] = useState('');
+  const [fname, setFname] useState('');
   const [data, setData] = useState<ApiResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,12 +37,10 @@ export default function HomePage() {
 
   const circleRef = useRef<HTMLDivElement>(null);
 
-  // You should have your testnet address here for now
   const contractAddress = 'YOUR_DEPLOYED_CONTRACT_ADDRESS_HERE'; 
   
-  // This ABI now correctly matches your deployed smart contract
   const contractAbi = parseAbi([
-      'function mintCircle(string memory uri) external'
+      'function mint(string memory uri) external'
   ]);
 
   const generateCircle = async () => {
@@ -144,11 +141,10 @@ export default function HomePage() {
 
         const publicClient = createPublicClient({ chain: base, transport: http() });
         
-        // CRITICAL FIX: The function name is now correct
         const { request } = await publicClient.simulateContract({
             address: contractAddress as `0x${string}`,
             abi: contractAbi,
-            functionName: 'mintCircle', 
+            functionName: 'mint',
             args: [metadataUrl], 
             account: address,
         });
@@ -229,6 +225,9 @@ const SuccessMessage = ({ txHash }: { txHash: string }) => {
     );
 };
 
+// ==================================================================
+// THIS SECTION HAS BEEN COMPLETELY REBUILT TO FIX THE VERCEL ERROR
+// ==================================================================
 const CircleVisualization = ({ data }: { data: ApiResponse }) => {
     const totalSize = 450;
     const centerPfpSize = 80;
@@ -238,7 +237,50 @@ const CircleVisualization = ({ data }: { data: ApiResponse }) => {
     const outerRadius = 200;
 
     return (
-        <div className="relative rounded-full bg-gray-900" style={{ width: `${totalSize}px`, height: `${totalSize}px` }}>
-            <Image
-                src={data.mainUser.pfp_url}
-                alt={data.mainUser.display_name}
+        <div className="relative" style={{ width: `${totalSize}px`, height: `${totalSize}px` }}>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+                <Image
+                    src={data.mainUser.pfp_url}
+                    alt={data.mainUser.display_name}
+                    width={centerPfpSize}
+                    height={centerPfpSize}
+                    className="rounded-full border-4 border-purple-500"
+                />
+            </div>
+            {data.innerCircle.map((follower, index) => {
+                const angle = (index / data.innerCircle.length) * 2 * Math.PI - Math.PI / 2;
+                const x = innerRadius * Math.cos(angle) + totalSize / 2;
+                const y = innerRadius * Math.sin(angle) + totalSize / 2;
+                return <Pfp key={follower.username} user={follower} size={innerCirclePfpSize} x={x} y={y} />;
+            })}
+            {data.outerCircle.map((follower, index) => {
+                const angle = (index / data.outerCircle.length) * 2 * Math.PI - Math.PI / 2;
+                const x = outerRadius * Math.cos(angle) + totalSize / 2;
+                const y = outerRadius * Math.sin(angle) + totalSize / 2;
+                return <Pfp key={follower.username} user={follower} size={outerCirclePfpSize} x={x} y={y} />;
+            })}
+        </div>
+    );
+};
+
+const Pfp = ({ user, size, x, y }: { user: User, size: number, x: number, y: number }) => (
+    <div
+        className="absolute z-10"
+        style={{
+            width: `${size}px`,
+            height: `${size}px`,
+            left: `${x}px`,
+            top: `${y}px`,
+            transform: 'translate(-50%, -50%)'
+        }}
+    >
+        <Image
+            src={user.pfp_url}
+            alt={user.username}
+            width={size}
+            height={size}
+            title={user.display_name}
+            className="rounded-full border-2 border-gray-600"
+        />
+    </div>
+);
