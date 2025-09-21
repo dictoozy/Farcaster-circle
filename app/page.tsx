@@ -41,7 +41,8 @@ export default function HomePage() {
   const contractAddress = 'YOUR_DEPLOYED_CONTRACT_ADDRESS_HERE'; 
   
   const contractAbi = parseAbi([
-      'function mint(string memory uri) external'
+      // This needs to match the function in your final deployed contract
+      'function mint(string memory uri) external' 
   ]);
 
   const generateCircle = async () => {
