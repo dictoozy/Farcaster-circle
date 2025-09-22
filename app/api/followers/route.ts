@@ -1,135 +1,62 @@
-import { NextResponse } from 'next/server';
+// File: app/api/user/route.ts
 
-export async function POST(request: Request) {
-  const { fname } = await request.json();
+import { NextRequest, NextResponse } from 'next/server';
 
-  if (!fname) {
-    return NextResponse.json({ message: 'Farcaster username is required' }, { status: 400 });
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const username = searchParams.get('username');
+  
+  if (!username) {
+    return NextResponse.json({ message: 'Username is required' }, { status: 400 });
+  }
+
+  const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY;
+  if (!NEYNAR_API_KEY) {
+    return NextResponse.json({ message: 'API key not configured' }, { status: 500 });
   }
 
   try {
-    // Mock data while Neynar API issues are resolved
-    console.log('Using mock data for user:', fname);
-    
-    const response = {
-      mainUser: {
-        pfp_url: "https://picsum.photos/200/200?random=main",
-        username: fname,
-        display_name: fname.charAt(0).toUpperCase() + fname.slice(1),
+    // 1. First, we need to get the user's FID (Farcaster ID) from their username
+    const userResponse = await fetch(`https://api.neynar.com/v2/farcaster/user/search?q=${username}&viewer_fid=1`, {
+      method: 'GET',
+      headers: {
+        'accept': 'application/json',
+        'api_key': NEYNAR_API_KEY,
       },
-      innerCircle: [
-        {
-          pfp_url: "https://picsum.photos/200/200?random=1",
-          username: "vitalik",
-          display_name: "Vitalik Buterin",
-        },
-        {
-          pfp_url: "https://picsum.photos/200/200?random=2", 
-          username: "dwr",
-          display_name: "Dan Romero",
-        },
-        {
-          pfp_url: "https://picsum.photos/200/200?random=3",
-          username: "jesse",
-          display_name: "Jesse Pollak",
-        },
-        {
-          pfp_url: "https://picsum.photos/200/200?random=4",
-          username: "varunsrin",
-          display_name: "Varun Srinivasan", 
-        },
-        {
-          pfp_url: "https://picsum.photos/200/200?random=5",
-          username: "linda",
-          display_name: "Linda Xie",
-        },
-        {
-          pfp_url: "https://picsum.photos/200/200?random=6",
-          username: "balajis", 
-          display_name: "Balaji Srinivasan",
-        },
-        {
-          pfp_url: "https://picsum.photos/200/200?random=7",
-          username: "seneca",
-          display_name: "Seneca",
-        },
-        {
-          pfp_url: "https://picsum.photos/200/200?random=8",
-          username: "pfista",
-          display_name: "Paul Frazee",
-        }
-      ],
-      outerCircle: [
-        {
-          pfp_url: "https://picsum.photos/200/200?random=9",
-          username: "cassie",
-          display_name: "Cassie Heart",
-        },
-        {
-          pfp_url: "https://picsum.photos/200/200?random=10",
-          username: "coopahtroopa",
-          display_name: "Cooper Turley",
-        },
-        {
-          pfp_url: "https://picsum.photos/200/200?random=11",
-          username: "rish",
-          display_name: "Rish",
-        },
-        {
-          pfp_url: "https://picsum.photos/200/200?random=12",
-          username: "krishna",
-          display_name: "Krishna Sriram",
-        },
-        {
-          pfp_url: "https://picsum.photos/200/200?random=13",
-          username: "alvesjtiago",
-          display_name: "Tiago Alves",
-        },
-        {
-          pfp_url: "https://picsum.photos/200/200?random=14", 
-          username: "ace",
-          display_name: "Ace",
-        },
-        {
-          pfp_url: "https://picsum.photos/200/200?random=15",
-          username: "farcasterxyz",
-          display_name: "Farcaster",
-        },
-        {
-          pfp_url: "https://picsum.photos/200/200?random=16",
-          username: "warpcast",
-          display_name: "Warpcast",
-        },
-        {
-          pfp_url: "https://picsum.photos/200/200?random=17",
-          username: "alexmasmej", 
-          display_name: "Alex Masmej",
-        },
-        {
-          pfp_url: "https://picsum.photos/200/200?random=18",
-          username: "raj",
-          display_name: "Raj Gokal",
-        },
-        {
-          pfp_url: "https://picsum.photos/200/200?random=19",
-          username: "grin",
-          display_name: "Michael Grin",
-        },
-        {
-          pfp_url: "https://picsum.photos/200/200?random=20",
-          username: "zachterrell",
-          display_name: "Zach Terrell",
-        }
-      ]
-    };
+    });
     
-    return NextResponse.json(response);
-
-  } catch (error: unknown) {
-    console.error('Route error:', error);
-    if (error instanceof Error) {
-        return NextResponse.json({ message: error.message }, { status: 500 });
+    if (!userResponse.ok) {
+        throw new Error('Failed to find user');
     }
-    return NextResponse.json({ message: 'An internal server error occurred' }, { status: 500 });
+    
+    const userData = await userResponse.json();
+    const fid = userData.result.users[0]?.fid;
+
+    if (!fid) {
+      return NextResponse.json({ message: 'User not found' }, { status: 404 });
+    }
+
+    // 2. Now, use the FID to get the user's followers (or any other connection)
+    // We'll limit it to 25 followers for this example
+    const followersResponse = await fetch(`https://api.neynar.com/v2/farcaster/followers?fid=${fid}&limit=25`, {
+      method: 'GET',
+      headers: {
+        'accept': 'application/json',
+        'api_key': NEYNAR_API_KEY,
+      },
+    });
+
+    if (!followersResponse.ok) {
+      throw new Error('Failed to fetch followers');
+    }
+
+    const followersData = await followersResponse.json();
+    
+    // The API gives us a list of users, which is exactly what your component needs
+    return NextResponse.json(followersData.users, { status: 200 });
+
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ message: 'An error occurred' }, { status: 500 });
   }
 }

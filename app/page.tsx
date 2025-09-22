@@ -42,7 +42,7 @@ export default function HomePage() {
   const circleRef = useRef<HTMLDivElement>(null);
 
   // REPLACE WITH YOUR ACTUAL DEPLOYED CONTRACT ADDRESS
-  const contractAddress = 'YOUR_CONTRACT_ADDRESS_HERE'; 
+  const contractAddress = '0xD7c7d560De9C40E0bADfC68B8a9F9A9e1F31F67E'; 
   
   // ABI matches your contract's mintCircle function
   const contractAbi = parseAbi([
@@ -132,6 +132,11 @@ export default function HomePage() {
   };
 
   const handleMint = async () => {
+    const handleMint = async () => {
+  console.log("Attempting to mint. Token found:", process.env.NEXT_PUBLIC_WEB3_STORAGE_TOKEN);
+
+  // ... the rest of the function's code
+};
     if (!data || !circleRef.current) {
         setError("Please generate a circle first.");
         return;
@@ -141,11 +146,7 @@ export default function HomePage() {
         setError("Web3.Storage API token is not configured. Please add NEXT_PUBLIC_WEB3_STORAGE_TOKEN to your environment variables.");
         return;
     }
-
-    if (contractAddress === 'YOUR_CONTRACT_ADDRESS_HERE' || !contractAddress) {
-        setError("Please update the contract address in the code with your deployed contract address.");
-        return;
-    }
+   
 
     setIsMinting(true);
     setError(null);
