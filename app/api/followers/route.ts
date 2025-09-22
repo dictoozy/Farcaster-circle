@@ -1,5 +1,3 @@
-// File: app/api/user/route.ts
-
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
@@ -16,7 +14,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // 1. First, we need to get the user's FID (Farcaster ID) from their username
+    // 1. Get the user's FID from their username
     const userResponse = await fetch(`https://api.neynar.com/v2/farcaster/user/search?q=${username}&viewer_fid=1`, {
       method: 'GET',
       headers: {
@@ -26,18 +24,19 @@ export async function GET(req: NextRequest) {
     });
     
     if (!userResponse.ok) {
-        throw new Error('Failed to find user');
+        throw new Error('Failed to fetch user from Neynar API');
     }
     
     const userData = await userResponse.json();
-    const fid = userData.result.users[0]?.fid;
 
-    if (!fid) {
-      return NextResponse.json({ message: 'User not found' }, { status: 404 });
+    // Safer check to ensure the user exists
+    if (!userData.result || !userData.result.users || userData.result.users.length === 0) {
+      return NextResponse.json({ message: 'Farcaster user not found' }, { status: 404 });
     }
 
-    // 2. Now, use the FID to get the user's followers (or any other connection)
-    // We'll limit it to 25 followers for this example
+    const fid = userData.result.users[0].fid;
+
+    // 2. Use the FID to get the user's followers (limited to 25 for this example)
     const followersResponse = await fetch(`https://api.neynar.com/v2/farcaster/followers?fid=${fid}&limit=25`, {
       method: 'GET',
       headers: {
@@ -52,11 +51,10 @@ export async function GET(req: NextRequest) {
 
     const followersData = await followersResponse.json();
     
-    // The API gives us a list of users, which is exactly what your component needs
     return NextResponse.json(followersData.users, { status: 200 });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
-    return NextResponse.json({ message: 'An error occurred' }, { status: 500 });
+    return NextResponse.json({ message: error.message || 'An internal server error occurred' }, { status: 500 });
   }
 }
