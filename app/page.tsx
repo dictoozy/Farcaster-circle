@@ -39,7 +39,7 @@ export default function HomePage() {
   const circleRef = useRef<HTMLDivElement>(null);
 
   // Replace with your actual deployed contract address
-  const contractAddress = '0xYOUR_DEPLOYED_CONTRACT_ADDRESS';
+  const contractAddress = '0xD7c7d560De9C40E0bADfC68B8a9F9A9e1F31F67E';
   
   const contractAbi = parseAbi([
     'function mintCircle(string memory uri) external'
@@ -103,7 +103,7 @@ export default function HomePage() {
       return;
     }
 
-    if (contractAddress === '0xYOUR_DEPLOYED_CONTRACT_ADDRESS') {
+    if (contractAddress === '0xD7c7d560De9C40E0bADfC68B8a9F9A9e1F31F67E') {
       setError('Contract address not configured');
       return;
     }
