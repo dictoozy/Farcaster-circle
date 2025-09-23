@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import Image from 'next/image'; // Import the Next.js Image component
 
 // TypeScript interface for a Farcaster User object
 interface FarcasterUser {
@@ -10,7 +11,7 @@ interface FarcasterUser {
   pfp_url: string;
 }
 
-// A simple component to display the user circles
+// A component to display the user circles using Next.js Image for optimization
 const CircleVisualization = ({ data }: { data: FarcasterUser[] }) => {
   if (!data || data.length === 0) return null;
   return (
@@ -18,13 +19,19 @@ const CircleVisualization = ({ data }: { data: FarcasterUser[] }) => {
       <h3 className="text-white mb-3 text-center">{data.length} Connections Found</h3>
       <div className="flex flex-wrap gap-2 justify-center">
         {data.map((user) => (
-          <img 
+          <Image 
             key={user.fid} 
             src={user.pfp_url} 
             alt={user.username} 
-            className="w-12 h-12 rounded-full border-2 border-purple-400"
+            className="rounded-full border-2 border-purple-400"
             title={user.display_name}
-            onError={(e) => { e.currentTarget.src = 'https://i.imgur.com/7bE4g7A.png'; }} // Fallback image in case of an error
+            width={48}
+            height={48}
+            onError={(e) => { 
+              // This is a workaround for Next.js Image onError
+              const target = e.target as HTMLImageElement;
+              target.src = 'https://i.imgur.com/7bE4g7A.png'; 
+            }}
           />
         ))}
       </div>
@@ -92,7 +99,6 @@ export default function HomePage() {
         return;
     }
     
-    // Check if the contract address placeholder has been replaced
     if (!contractAddress || contractAddress === 'YOUR_CONTRACT_ADDRESS_HERE') {
         setError("Contract address is not configured in page.tsx.");
         return;
@@ -103,14 +109,8 @@ export default function HomePage() {
     setMintSuccessTx(null);
 
     try {
-      // --- THIS IS WHERE YOUR REAL MINTING LOGIC WILL GO ---
-      // 1. Connect wallet (using RainbowKit, Wagmi, etc.)
-      // 2. Capture the visualization as an image (using html-to-image library)
-      // 3. Upload image to Web3.Storage
-      // 4. Call your smart contract's mint function
-      
       console.log("Simulating mint process...");
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate async work
+      await new Promise(resolve => setTimeout(resolve, 2000));
       setMintSuccessTx('0x123abc...placeholder_transaction_hash');
 
     } catch (err: any) {

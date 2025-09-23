@@ -14,13 +14,9 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // 1. Get the user's FID from their username
     const userResponse = await fetch(`https://api.neynar.com/v2/farcaster/user/search?q=${username}&viewer_fid=1`, {
       method: 'GET',
-      headers: {
-        'accept': 'application/json',
-        'api_key': NEYNAR_API_KEY,
-      },
+      headers: { 'accept': 'application/json', 'api_key': NEYNAR_API_KEY },
     });
     
     if (!userResponse.ok) {
@@ -29,20 +25,15 @@ export async function GET(req: NextRequest) {
     
     const userData = await userResponse.json();
 
-    // Safer check to ensure the user exists
     if (!userData.result || !userData.result.users || userData.result.users.length === 0) {
       return NextResponse.json({ message: 'Farcaster user not found' }, { status: 404 });
     }
 
     const fid = userData.result.users[0].fid;
 
-    // 2. Use the FID to get the user's followers (limited to 25 for this example)
     const followersResponse = await fetch(`https://api.neynar.com/v2/farcaster/followers?fid=${fid}&limit=25`, {
       method: 'GET',
-      headers: {
-        'accept': 'application/json',
-        'api_key': NEYNAR_API_KEY,
-      },
+      headers: { 'accept': 'application/json', 'api_key': NEYNAR_API_KEY },
     });
 
     if (!followersResponse.ok) {
