@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import Image from 'next/image'; // Import the Next.js Image component
+import Image from 'next/image';
 
 // TypeScript interface for a Farcaster User object
 interface FarcasterUser {
@@ -11,7 +11,7 @@ interface FarcasterUser {
   pfp_url: string;
 }
 
-// A component to display the user circles using Next.js Image for optimization
+// A component to display the user circles
 const CircleVisualization = ({ data }: { data: FarcasterUser[] }) => {
   if (!data || data.length === 0) return null;
   return (
@@ -28,7 +28,6 @@ const CircleVisualization = ({ data }: { data: FarcasterUser[] }) => {
             width={48}
             height={48}
             onError={(e) => { 
-              // This is a workaround for Next.js Image onError
               const target = e.target as HTMLImageElement;
               target.src = 'https://i.imgur.com/7bE4g7A.png'; 
             }}
@@ -48,7 +47,6 @@ export default function HomePage() {
   const [isMinting, setIsMinting] = useState<boolean>(false);
   const [mintSuccessTx, setMintSuccessTx] = useState<string | null>(null);
 
-  // ❗️ PASTE YOUR DEPLOYED CONTRACT ADDRESS HERE
   const contractAddress = 'YOUR_CONTRACT_ADDRESS_HERE';
 
   const generateCircle = async () => {
@@ -78,7 +76,7 @@ export default function HomePage() {
       }
       setData(fetchedData);
 
-    } catch (err: any) {
+    } catch (err: any) { // This `any` is where the error comes from
       console.error("Failed to generate circle:", err);
       setError(err.message);
     } finally {
@@ -113,7 +111,7 @@ export default function HomePage() {
       await new Promise(resolve => setTimeout(resolve, 2000));
       setMintSuccessTx('0x123abc...placeholder_transaction_hash');
 
-    } catch (err: any) {
+    } catch (err: any) { // This `any` is the other source of the error
         console.error("Failed to mint:", err);
         setError(err.message || "An unknown error occurred during minting.");
     } finally {
