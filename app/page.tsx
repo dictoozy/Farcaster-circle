@@ -1,4 +1,4 @@
-// app/page.tsx - Main component
+// app/page.tsx - Complete fixed version
 'use client';
 
 import { useState, useRef } from 'react';
@@ -10,7 +10,7 @@ import Image from 'next/image';
 declare global {
   interface Window {
     ethereum?: {
-      request: (args: { method: string; params?: any[] }) => Promise<any>;
+      request: (args: { method: string; params?: string[] }) => Promise<string[]>;
       isMetaMask?: boolean;
     };
   }
@@ -39,7 +39,7 @@ export default function HomePage() {
   const circleRef = useRef<HTMLDivElement>(null);
 
   // Replace with your actual deployed contract address
-  const contractAddress = '0xD7c7d560De9C40E0bADfC68B8a9F9A9e1F31F67E';
+  const contractAddress = '0xYOUR_DEPLOYED_CONTRACT_ADDRESS';
   
   const contractAbi = parseAbi([
     'function mintCircle(string memory uri) external'
@@ -85,14 +85,14 @@ export default function HomePage() {
     try {
       const accounts = await window.ethereum.request({
         method: 'eth_requestAccounts',
-      });
+      }) as string[];
 
       return createWalletClient({
         account: accounts[0] as `0x${string}`,
         chain: baseSepolia,
         transport: custom(window.ethereum)
       });
-    } catch (err) {
+    } catch {
       throw new Error('Failed to connect wallet');
     }
   };
@@ -103,7 +103,7 @@ export default function HomePage() {
       return;
     }
 
-    if (contractAddress === '0xD7c7d560De9C40E0bADfC68B8a9F9A9e1F31F67E') {
+    if (contractAddress === '0xYOUR_DEPLOYED_CONTRACT_ADDRESS') {
       setError('Contract address not configured');
       return;
     }
@@ -127,11 +127,10 @@ export default function HomePage() {
       const response = await fetch(imageDataUrl);
       const blob = await response.blob();
 
-      // Upload to IPFS (using a simple upload service for now)
+      // Upload to IPFS
       const formData = new FormData();
       formData.append('file', blob, `${data.mainUser.username}-circle.png`);
 
-      // This is a placeholder - you'll need to implement actual IPFS upload
       const uploadResponse = await fetch('/api/upload', {
         method: 'POST',
         body: formData,

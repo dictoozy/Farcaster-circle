@@ -1,6 +1,10 @@
 // app/api/upload/route.ts
 import { NextResponse } from 'next/server';
 
+interface Web3StorageResponse {
+  cid: string;
+}
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
@@ -37,12 +41,12 @@ export async function POST(request: Request) {
       throw new Error(`Upload failed: ${response.statusText}`);
     }
 
-    const result = await response.json();
+    const result = await response.json() as Web3StorageResponse;
     const ipfsUrl = `https://dweb.link/ipfs/${result.cid}/${file.name}`;
 
     return NextResponse.json({ ipfsUrl, cid: result.cid });
-  } catch (error) {
-    console.error('Upload error:', error);
+  } catch (uploadError) {
+    console.error('Upload error:', uploadError);
     return NextResponse.json(
       { error: 'Upload failed' },
       { status: 500 }
