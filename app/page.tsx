@@ -103,7 +103,7 @@ export default function HomePage() {
       return;
     }
 
-    if (contractAddress === '0xYOUR_DEPLOYED_CONTRACT_ADDRESS') {
+    if (!contractAddress || contractAddress.length !== 42) {
       setError('Contract address not configured');
       return;
     }
