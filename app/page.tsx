@@ -38,7 +38,7 @@ export default function HomePage() {
 
   const circleRef = useRef<HTMLDivElement>(null);
 
-  // Replace with your actual deployed contract address
+  // Your deployed contract address
   const contractAddress = '0xD7c7d560De9C40E0bADfC68B8a9F9A9e1F31F67E';
   
   const contractAbi = parseAbi([
@@ -103,7 +103,7 @@ export default function HomePage() {
       return;
     }
 
-    if (contractAddress === '0xD7c7d560De9C40E0bADfC68B8a9F9A9e1F31F67E') {
+    if (contractAddress === '0xYOUR_DEPLOYED_CONTRACT_ADDRESS') {
       setError('Contract address not configured');
       return;
     }
@@ -191,52 +191,72 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+    <main className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white p-4">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
             Farcaster Circles
           </h1>
-          <p className="text-xl text-gray-300 mb-2">
+          <p className="text-lg text-gray-300 mb-2">
             Visualize your social circles and mint them as NFTs
           </p>
           <p className="text-sm text-yellow-400">Running on Base Sepolia Testnet</p>
         </div>
 
-        <div className="flex gap-4 justify-center mb-8">
-          <input
-            type="text"
-            value={fname}
-            onChange={(e) => setFname(e.target.value)}
-            placeholder="Enter username (e.g., dwr)"
-            className="px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 w-64 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-          />
-          <button
-            onClick={generateCircle}
-            disabled={isLoading}
-            className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:from-cyan-600 hover:to-blue-600 transition-all"
-          >
-            {isLoading ? 'Generating...' : 'Generate Circles'}
-          </button>
-        </div>
-
-        <div className="flex justify-center mb-8">
-          {isLoading && (
-            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-cyan-400"></div>
-          )}
-          
-          {error && (
-            <div className="bg-red-900/50 border border-red-700 text-red-300 px-6 py-4 rounded-lg">
-              <p className="font-semibold">Error:</p>
-              <p>{error}</p>
+        <div className="flex flex-col lg:flex-row gap-8 items-start">
+          {/* Left side - Controls and errors */}
+          <div className="lg:w-1/3 space-y-6">
+            <div className="flex flex-col gap-4">
+              <input
+                type="text"
+                value={fname}
+                onChange={(e) => setFname(e.target.value)}
+                placeholder="Enter username (e.g., dwr)"
+                className="px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 w-full focus:outline-none focus:ring-2 focus:ring-cyan-400"
+              />
+              <button
+                onClick={generateCircle}
+                disabled={isLoading}
+                className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:from-cyan-600 hover:to-blue-600 transition-all"
+              >
+                {isLoading ? 'Generating...' : 'Generate Circles'}
+              </button>
             </div>
-          )}
 
+            {isLoading && (
+              <div className="flex justify-center">
+                <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-cyan-400"></div>
+              </div>
+            )}
+            
+            {error && (
+              <div className="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg">
+                <p className="font-semibold">Error:</p>
+                <p className="text-sm">{error}</p>
+              </div>
+            )}
+
+            {mintSuccess && (
+              <div className="bg-green-900/50 border border-green-700 text-green-300 px-4 py-3 rounded-lg">
+                <p className="font-bold text-lg mb-2">NFT Minted Successfully!</p>
+                <a
+                  href={`https://sepolia.basescan.org/tx/${mintSuccess}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-cyan-400 underline hover:text-cyan-300 text-sm"
+                >
+                  View on Basescan
+                </a>
+              </div>
+            )}
+          </div>
+
+          {/* Right side - Visualization and Mint Button */}
           {data && (
-            <div className="text-center">
+            <div className="lg:w-2/3 flex flex-col items-center">
               <div
                 ref={circleRef}
-                className="inline-block p-8 bg-gradient-to-br from-indigo-900/50 to-purple-900/50 rounded-2xl border border-white/20 mb-6"
+                className="p-6 bg-gradient-to-br from-indigo-900/50 to-purple-900/50 rounded-2xl border border-white/20 mb-6"
               >
                 <CircleVisualization data={data} />
               </div>
@@ -252,20 +272,6 @@ export default function HomePage() {
               )}
             </div>
           )}
-
-          {mintSuccess && (
-            <div className="bg-green-900/50 border border-green-700 text-green-300 px-6 py-4 rounded-lg text-center">
-              <p className="font-bold text-lg mb-2">NFT Minted Successfully!</p>
-              <a
-                href={`https://sepolia.basescan.org/tx/${mintSuccess}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-cyan-400 underline hover:text-cyan-300"
-              >
-                View on Basescan
-              </a>
-            </div>
-          )}
         </div>
       </div>
     </main>
@@ -273,10 +279,10 @@ export default function HomePage() {
 }
 
 const CircleVisualization = ({ data }: { data: ApiResponse }) => {
-  const centerSize = 80;
-  const innerSize = 50;
-  const outerSize = 40;
-  const canvasSize = 500;
+  const centerSize = 60;
+  const innerSize = 40;
+  const outerSize = 30;
+  const canvasSize = 400;
 
   return (
     <div className="relative" style={{ width: canvasSize, height: canvasSize }}>
