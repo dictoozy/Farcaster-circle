@@ -116,57 +116,20 @@ export default function HomePage() {
       const walletClient = await connectWallet();
       const [address] = await walletClient.getAddresses();
 
-      // Capture image
-      const imageDataUrl = await toPng(circleRef.current, {
-        backgroundColor: '#111827',
-        width: 600,
-        height: 600,
-      });
-
-      // Convert to blob for upload
-      const response = await fetch(imageDataUrl);
-      const blob = await response.blob();
-
-      // Upload to IPFS
-      const formData = new FormData();
-      formData.append('file', blob, `${data.mainUser.username}-circle.png`);
-
-      const uploadResponse = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error('Failed to upload image');
-      }
-
-      const { ipfsUrl } = await uploadResponse.json();
-
-      // Create metadata
-      const metadata = {
+      // For now, use a simple placeholder metadata URL to test minting
+      // We'll add the image upload later once basic minting works
+      const placeholderMetadata = `data:application/json;base64,${btoa(JSON.stringify({
         name: `Farcaster Circle - ${data.mainUser.display_name}`,
         description: `A social circle visualization for ${data.mainUser.username}`,
-        image: ipfsUrl,
+        image: "https://via.placeholder.com/400x400/6366f1/ffffff?text=Farcaster+Circle",
         attributes: [
           { trait_type: 'Username', value: data.mainUser.username },
           { trait_type: 'Inner Circle Count', value: data.innerCircle.length },
           { trait_type: 'Outer Circle Count', value: data.outerCircle.length },
         ],
-      };
+      }))}`;
 
-      // Upload metadata
-      const metadataBlob = new Blob([JSON.stringify(metadata)], { type: 'application/json' });
-      const metadataFormData = new FormData();
-      metadataFormData.append('file', metadataBlob, 'metadata.json');
-
-      const metadataResponse = await fetch('/api/upload', {
-        method: 'POST',
-        body: metadataFormData,
-      });
-
-      const { ipfsUrl: metadataUrl } = await metadataResponse.json();
-
-      // Mint NFT
+      // Mint NFT with placeholder metadata
       const publicClient = createPublicClient({
         chain: baseSepolia,
         transport: http(),
@@ -176,7 +139,7 @@ export default function HomePage() {
         address: contractAddress as `0x${string}`,
         abi: contractAbi,
         functionName: 'mintCircle',
-        args: [metadataUrl],
+        args: [placeholderMetadata],
         account: address,
       });
 
@@ -184,6 +147,7 @@ export default function HomePage() {
       setMintSuccess(hash);
       
     } catch (err) {
+      console.error('Minting error:', err);
       setError(err instanceof Error ? err.message : 'Minting failed');
     } finally {
       setIsMinting(false);
@@ -203,57 +167,53 @@ export default function HomePage() {
           <p className="text-sm text-yellow-400">Running on Base Sepolia Testnet</p>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8 items-start">
-          {/* Left side - Controls and errors */}
-          <div className="lg:w-1/3 space-y-6">
-            <div className="flex flex-col gap-4">
-              <input
-                type="text"
-                value={fname}
-                onChange={(e) => setFname(e.target.value)}
-                placeholder="Enter username (e.g., dwr)"
-                className="px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 w-full focus:outline-none focus:ring-2 focus:ring-cyan-400"
-              />
-              <button
-                onClick={generateCircle}
-                disabled={isLoading}
-                className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:from-cyan-600 hover:to-blue-600 transition-all"
-              >
-                {isLoading ? 'Generating...' : 'Generate Circles'}
-              </button>
-            </div>
-
-            {isLoading && (
-              <div className="flex justify-center">
-                <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-cyan-400"></div>
-              </div>
-            )}
-            
-            {error && (
-              <div className="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg">
-                <p className="font-semibold">Error:</p>
-                <p className="text-sm">{error}</p>
-              </div>
-            )}
-
-            {mintSuccess && (
-              <div className="bg-green-900/50 border border-green-700 text-green-300 px-4 py-3 rounded-lg">
-                <p className="font-bold text-lg mb-2">NFT Minted Successfully!</p>
-                <a
-                  href={`https://sepolia.basescan.org/tx/${mintSuccess}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-cyan-400 underline hover:text-cyan-300 text-sm"
-                >
-                  View on Basescan
-                </a>
-              </div>
-            )}
+        <div className="flex flex-col items-center gap-8">
+          {/* Centered Controls */}
+          <div className="w-full max-w-md space-y-4">
+            <input
+              type="text"
+              value={fname}
+              onChange={(e) => setFname(e.target.value)}
+              placeholder="Enter username (e.g., dwr)"
+              className="px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 w-full focus:outline-none focus:ring-2 focus:ring-cyan-400"
+            />
+            <button
+              onClick={generateCircle}
+              disabled={isLoading}
+              className="w-full px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:from-cyan-600 hover:to-blue-600 transition-all"
+            >
+              {isLoading ? 'Generating...' : 'Generate Circles'}
+            </button>
           </div>
 
-          {/* Right side - Visualization and Mint Button */}
+          {isLoading && (
+            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-cyan-400"></div>
+          )}
+          
+          {error && (
+            <div className="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg max-w-md">
+              <p className="font-semibold">Error:</p>
+              <p className="text-sm">{error}</p>
+            </div>
+          )}
+
+          {mintSuccess && (
+            <div className="bg-green-900/50 border border-green-700 text-green-300 px-4 py-3 rounded-lg max-w-md">
+              <p className="font-bold text-lg mb-2">NFT Minted Successfully!</p>
+              <a
+                href={`https://sepolia.basescan.org/tx/${mintSuccess}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-cyan-400 underline hover:text-cyan-300 text-sm"
+              >
+                View on Basescan
+              </a>
+            </div>
+          )}
+
+          {/* Centered Visualization */}
           {data && (
-            <div className="lg:w-2/3 flex flex-col items-center">
+            <div className="flex flex-col items-center">
               <div
                 ref={circleRef}
                 className="p-6 bg-gradient-to-br from-indigo-900/50 to-purple-900/50 rounded-2xl border border-white/20 mb-6"
@@ -288,12 +248,15 @@ const CircleVisualization = ({ data }: { data: ApiResponse }) => {
     <div className="relative" style={{ width: canvasSize, height: canvasSize }}>
       {/* Center user */}
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
-        <Image
+        <img
           src={data.mainUser.pfp_url}
           alt={data.mainUser.display_name}
           width={centerSize}
           height={centerSize}
           className="rounded-full border-4 border-cyan-400 shadow-lg shadow-cyan-400/50"
+          onError={(e) => {
+            e.currentTarget.src = `https://ui-avatars.com/api/?name=${data.mainUser.username}&size=${centerSize}&background=6366f1&color=ffffff`;
+          }}
         />
       </div>
 
@@ -310,12 +273,15 @@ const CircleVisualization = ({ data }: { data: ApiResponse }) => {
             className="absolute transform -translate-x-1/2 -translate-y-1/2 z-10"
             style={{ left: x, top: y }}
           >
-            <Image
+            <img
               src={user.pfp_url}
               alt={user.username}
               width={innerSize}
               height={innerSize}
               className="rounded-full border-2 border-purple-400 shadow-lg"
+              onError={(e) => {
+                e.currentTarget.src = `https://ui-avatars.com/api/?name=${user.username}&size=${innerSize}&background=a855f7&color=ffffff`;
+              }}
             />
           </div>
         );
@@ -334,12 +300,15 @@ const CircleVisualization = ({ data }: { data: ApiResponse }) => {
             className="absolute transform -translate-x-1/2 -translate-y-1/2"
             style={{ left: x, top: y }}
           >
-            <Image
+            <img
               src={user.pfp_url}
               alt={user.username}
               width={outerSize}
               height={outerSize}
               className="rounded-full border-2 border-gray-400 shadow-md"
+              onError={(e) => {
+                e.currentTarget.src = `https://ui-avatars.com/api/?name=${user.username}&size=${outerSize}&background=6b7280&color=ffffff`;
+              }}
             />
           </div>
         );
