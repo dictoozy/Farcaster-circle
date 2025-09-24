@@ -296,7 +296,7 @@ const CircleVisualization = ({ data }: { data: ApiResponse }) => {
 
         return (
           <div
-            key={user.username}
+            key={`outer-${user.username}-${index}`}
             className="absolute transform -translate-x-1/2 -translate-y-1/2"
             style={{ left: x, top: y }}
           >
@@ -306,6 +306,7 @@ const CircleVisualization = ({ data }: { data: ApiResponse }) => {
               width={outerSize}
               height={outerSize}
               className="rounded-full border-2 border-gray-400 shadow-md"
+              style={{ width: `${outerSize}px`, height: `${outerSize}px`, minWidth: `${outerSize}px`, minHeight: `${outerSize}px` }}
               onError={(e) => {
                 e.currentTarget.src = `https://ui-avatars.com/api/?name=${user.username}&size=${outerSize}&background=6b7280&color=ffffff`;
               }}
