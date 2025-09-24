@@ -139,6 +139,8 @@ export async function POST(request: Request) {
       })),
     };
 
+    console.log('Returning response with', followers.length, 'followers');
+    console.log('First inner circle user:', apiResponse.innerCircle[0]);
     return NextResponse.json(apiResponse);
 
   } catch (err) {
