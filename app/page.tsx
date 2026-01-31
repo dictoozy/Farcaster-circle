@@ -1,319 +1,303 @@
-// app/page.tsx - Complete fixed version
 'use client';
 
 import { useState, useRef } from 'react';
-import { createPublicClient, createWalletClient, http, custom, parseAbi } from 'viem';
-import { baseSepolia } from 'viem/chains';
 import { toPng } from 'html-to-image';
-import Image from 'next/image';
-
-declare global {
-  interface Window {
-    ethereum?: {
-      request: (args: { method: string; params?: string[] }) => Promise<string[]>;
-      isMetaMask?: boolean;
-    };
-  }
-}
 
 interface User {
   pfp_url: string;
   username: string;
   display_name: string;
+  score?: number;
 }
 
-interface ApiResponse {
+interface CircleData {
   mainUser: User;
   innerCircle: User[];
+  middleCircle: User[];
   outerCircle: User[];
+  stats: {
+    totalInteractions: number;
+    topScore: number;
+  };
 }
 
-export default function HomePage() {
-  const [fname, setFname] = useState('');
-  const [data, setData] = useState<ApiResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+export default function FarcasterCircles() {
+  const [username, setUsername] = useState('');
+  const [data, setData] = useState<CircleData | null>(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isMinting, setIsMinting] = useState(false);
-  const [mintSuccess, setMintSuccess] = useState<string | null>(null);
-
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const circleRef = useRef<HTMLDivElement>(null);
 
-  // Your deployed contract address
-  const contractAddress = '0xD7c7d560De9C40E0bADfC68B8a9F9A9e1F31F67E';
-  
-  const contractAbi = parseAbi([
-    'function mintCircle(string memory uri) external'
-  ]);
-
   const generateCircle = async () => {
-    if (!fname.trim()) {
-      setError('Please enter a Farcaster username');
+    if (!username.trim()) {
+      setError('Enter a Farcaster username');
       return;
     }
 
-    setIsLoading(true);
+    setLoading(true);
     setError(null);
     setData(null);
-    setMintSuccess(null);
+    setImageUrl(null);
 
     try {
-      const response = await fetch('/api/followers', {
+      const res = await fetch('/api/followers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fname: fname.replace('@', '') }),
+        body: JSON.stringify({ fname: username.replace('@', '') }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to fetch user data');
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Failed to fetch');
       }
 
-      const result = await response.json();
+      const result = await res.json();
       setData(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error occurred');
+      setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  const connectWallet = async () => {
-    if (!window.ethereum) {
-      throw new Error('MetaMask not installed');
-    }
-
+  const captureImage = async (): Promise<string | null> => {
+    if (!circleRef.current) return null;
+    
     try {
-      const accounts = await window.ethereum.request({
-        method: 'eth_requestAccounts',
-      }) as string[];
-
-      return createWalletClient({
-        account: accounts[0] as `0x${string}`,
-        chain: baseSepolia,
-        transport: custom(window.ethereum)
+      const dataUrl = await toPng(circleRef.current, {
+        backgroundColor: '#1a1a2e',
+        pixelRatio: 2,
       });
-    } catch {
-      throw new Error('Failed to connect wallet');
-    }
-  };
-
-  const mintCircle = async () => {
-    if (!data || !circleRef.current) {
-      setError('Please generate a circle first');
-      return;
-    }
-
-    if (!contractAddress || contractAddress.length !== 42) {
-      setError('Contract address not configured');
-      return;
-    }
-
-    setIsMinting(true);
-    setError(null);
-
-    try {
-      // Connect wallet
-      const walletClient = await connectWallet();
-      const [address] = await walletClient.getAddresses();
-
-      // For now, use a simple placeholder metadata URL to test minting
-      // We'll add the image upload later once basic minting works
-      const placeholderMetadata = `data:application/json;base64,${btoa(JSON.stringify({
-        name: `Farcaster Circle - ${data.mainUser.display_name}`,
-        description: `A social circle visualization for ${data.mainUser.username}`,
-        image: "https://via.placeholder.com/400x400/6366f1/ffffff?text=Farcaster+Circle",
-        attributes: [
-          { trait_type: 'Username', value: data.mainUser.username },
-          { trait_type: 'Inner Circle Count', value: data.innerCircle.length },
-          { trait_type: 'Outer Circle Count', value: data.outerCircle.length },
-        ],
-      }))}`;
-
-      // Mint NFT with placeholder metadata
-      const publicClient = createPublicClient({
-        chain: baseSepolia,
-        transport: http(),
-      });
-
-      const { request } = await publicClient.simulateContract({
-        address: contractAddress as `0x${string}`,
-        abi: contractAbi,
-        functionName: 'mintCircle',
-        args: [placeholderMetadata],
-        account: address,
-      });
-
-      const hash = await walletClient.writeContract(request);
-      setMintSuccess(hash);
-      
+      setImageUrl(dataUrl);
+      return dataUrl;
     } catch (err) {
-      console.error('Minting error:', err);
-      setError(err instanceof Error ? err.message : 'Minting failed');
-    } finally {
-      setIsMinting(false);
+      console.error('Failed to capture image:', err);
+      return null;
+    }
+  };
+
+  const downloadImage = async () => {
+    const url = imageUrl || await captureImage();
+    if (!url) return;
+
+    const link = document.createElement('a');
+    link.download = `farcaster-circle-${data?.mainUser.username || 'unknown'}.png`;
+    link.href = url;
+    link.click();
+  };
+
+  const shareToFarcaster = async () => {
+    const url = imageUrl || await captureImage();
+    if (!url || !data) return;
+
+    // Create share text
+    const text = encodeURIComponent(
+      `My Farcaster Circle 🟣\n\nTop friends: ${data.innerCircle.slice(0, 3).map(u => `@${u.username}`).join(', ')}\n\nGenerate yours 👇`
+    );
+    
+    // Warpcast compose URL
+    const warpcastUrl = `https://warpcast.com/~/compose?text=${text}`;
+    window.open(warpcastUrl, '_blank');
+  };
+
+  const copyImageToClipboard = async () => {
+    const url = imageUrl || await captureImage();
+    if (!url) return;
+
+    try {
+      const blob = await (await fetch(url)).blob();
+      await navigator.clipboard.write([
+        new ClipboardItem({ 'image/png': blob })
+      ]);
+      alert('Image copied! Paste it in Warpcast');
+    } catch {
+      // Fallback: download
+      downloadImage();
     }
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white p-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
-            Farcaster Circles
-          </h1>
-          <p className="text-lg text-gray-300 mb-2">
-            Visualize your social circles and mint them as NFTs
-          </p>
-          <p className="text-sm text-yellow-400">Running on Base Sepolia Testnet</p>
+    <main className="min-h-screen bg-[#0f0f1a] text-white">
+      {/* Header */}
+      <div className="border-b border-white/10">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xl">
+            🟣
+          </div>
+          <span className="text-xl font-bold">Farcaster Circles</span>
         </div>
+      </div>
 
-        <div className="flex flex-col items-center gap-8">
-          {/* Centered Controls */}
-          <div className="w-full max-w-md space-y-4">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Input */}
+        <div className="max-w-md mx-auto mb-8">
+          <div className="flex gap-2">
             <input
               type="text"
-              value={fname}
-              onChange={(e) => setFname(e.target.value)}
-              placeholder="Enter username (e.g., dwr)"
-              className="px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 w-full focus:outline-none focus:ring-2 focus:ring-cyan-400"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && generateCircle()}
+              placeholder="Enter username (e.g. dwr)"
+              className="flex-1 px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
             />
             <button
               onClick={generateCircle}
-              disabled={isLoading}
-              className="w-full px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:from-cyan-600 hover:to-blue-600 transition-all"
+              disabled={loading}
+              className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl font-semibold disabled:opacity-50 hover:opacity-90 transition"
             >
-              {isLoading ? 'Generating...' : 'Generate Circles'}
+              {loading ? '...' : 'Generate'}
             </button>
           </div>
-
-          {isLoading && (
-            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-cyan-400"></div>
-          )}
           
           {error && (
-            <div className="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg max-w-md">
-              <p className="font-semibold">Error:</p>
-              <p className="text-sm">{error}</p>
-            </div>
-          )}
-
-          {mintSuccess && (
-            <div className="bg-green-900/50 border border-green-700 text-green-300 px-4 py-3 rounded-lg max-w-md">
-              <p className="font-bold text-lg mb-2">NFT Minted Successfully!</p>
-              <a
-                href={`https://sepolia.basescan.org/tx/${mintSuccess}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-cyan-400 underline hover:text-cyan-300 text-sm"
-              >
-                View on Basescan
-              </a>
-            </div>
-          )}
-
-          {/* Centered Visualization */}
-          {data && (
-            <div className="flex flex-col items-center">
-              <div
-                ref={circleRef}
-                className="p-6 bg-gradient-to-br from-indigo-900/50 to-purple-900/50 rounded-2xl border border-white/20 mb-6"
-              >
-                <CircleVisualization data={data} />
-              </div>
-              
-              {!mintSuccess && (
-                <button
-                  onClick={mintCircle}
-                  disabled={isMinting}
-                  className="px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed hover:from-purple-600 hover:to-pink-600 transition-all"
-                >
-                  {isMinting ? 'Minting...' : 'Mint Your Circles NFT'}
-                </button>
-              )}
-            </div>
+            <p className="mt-3 text-red-400 text-sm text-center">{error}</p>
           )}
         </div>
+
+        {/* Loading */}
+        {loading && (
+          <div className="flex justify-center py-12">
+            <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+
+        {/* Circle Visualization */}
+        {data && (
+          <div className="flex flex-col items-center">
+            <div
+              ref={circleRef}
+              className="p-8 bg-gradient-to-br from-[#1a1a2e] to-[#16162a] rounded-2xl"
+            >
+              <CircleViz data={data} />
+            </div>
+
+            {/* Stats */}
+            <div className="mt-4 text-center text-white/60 text-sm">
+              Based on {data.stats.totalInteractions} interactions
+            </div>
+
+            {/* Action Buttons */}
+            <div className="mt-6 flex flex-wrap gap-3 justify-center">
+              <button
+                onClick={shareToFarcaster}
+                className="px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-xl font-semibold flex items-center gap-2 transition"
+              >
+                <span>🟣</span> Share on Farcaster
+              </button>
+              
+              <button
+                onClick={copyImageToClipboard}
+                className="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-semibold flex items-center gap-2 transition"
+              >
+                📋 Copy Image
+              </button>
+              
+              <button
+                onClick={downloadImage}
+                className="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-semibold flex items-center gap-2 transition"
+              >
+                ⬇️ Download
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Info */}
+        {!data && !loading && (
+          <div className="text-center text-white/50 mt-8">
+            <p>See who you interact with most on Farcaster</p>
+            <p className="text-sm mt-2">3 circles: closest friends → acquaintances</p>
+          </div>
+        )}
       </div>
     </main>
   );
 }
 
-const CircleVisualization = ({ data }: { data: ApiResponse }) => {
-  const centerSize = 60;
-  const innerSize = 40;
-  const outerSize = 30;
-  const canvasSize = 400;
+// Circle Visualization Component
+function CircleViz({ data }: { data: CircleData }) {
+  const size = 420;
+  const center = size / 2;
+
+  // Circle radii
+  const innerRadius = 80;
+  const middleRadius = 140;
+  const outerRadius = 195;
+
+  // Avatar sizes
+  const centerSize = 70;
+  const innerSize = 44;
+  const middleSize = 38;
+  const outerSize = 32;
+
+  const placeInCircle = (users: User[], radius: number, avatarSize: number, startAngle = -Math.PI / 2) => {
+    return users.map((user, i) => {
+      const angle = startAngle + (i / users.length) * 2 * Math.PI;
+      const x = center + radius * Math.cos(angle);
+      const y = center + radius * Math.sin(angle);
+      
+      return (
+        <div
+          key={user.username}
+          className="absolute transform -translate-x-1/2 -translate-y-1/2 group"
+          style={{ left: x, top: y }}
+        >
+          <img
+            src={user.pfp_url}
+            alt={user.username}
+            width={avatarSize}
+            height={avatarSize}
+            className="rounded-full border-2 border-white/30 hover:border-purple-400 transition-all hover:scale-110"
+            style={{ width: avatarSize, height: avatarSize }}
+            onError={(e) => {
+              e.currentTarget.src = `https://api.dicebear.com/7.x/identicon/svg?seed=${user.username}`;
+            }}
+          />
+          {/* Tooltip */}
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black/90 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition pointer-events-none">
+            @{user.username}
+          </div>
+        </div>
+      );
+    });
+  };
 
   return (
-    <div className="relative" style={{ width: canvasSize, height: canvasSize }}>
+    <div className="relative" style={{ width: size, height: size }}>
+      {/* Circle rings */}
+      <svg className="absolute inset-0" width={size} height={size}>
+        <circle cx={center} cy={center} r={outerRadius} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+        <circle cx={center} cy={center} r={middleRadius} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
+        <circle cx={center} cy={center} r={innerRadius} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+      </svg>
+
+      {/* Outer circle (acquaintances) */}
+      {placeInCircle(data.outerCircle, outerRadius, outerSize)}
+      
+      {/* Middle circle (good friends) */}
+      {placeInCircle(data.middleCircle, middleRadius, middleSize)}
+      
+      {/* Inner circle (closest friends) */}
+      {placeInCircle(data.innerCircle, innerRadius, innerSize)}
+
       {/* Center user */}
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
+      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
         <img
           src={data.mainUser.pfp_url}
-          alt={data.mainUser.display_name}
+          alt={data.mainUser.username}
           width={centerSize}
           height={centerSize}
-          className="rounded-full border-4 border-cyan-400 shadow-lg shadow-cyan-400/50"
+          className="rounded-full border-4 border-purple-500 shadow-lg shadow-purple-500/30"
+          style={{ width: centerSize, height: centerSize }}
           onError={(e) => {
-            e.currentTarget.src = `https://ui-avatars.com/api/?name=${data.mainUser.username}&size=${centerSize}&background=6366f1&color=ffffff`;
+            e.currentTarget.src = `https://api.dicebear.com/7.x/identicon/svg?seed=${data.mainUser.username}`;
           }}
         />
+        <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-center">
+          <span className="text-sm font-semibold text-white">@{data.mainUser.username}</span>
+        </div>
       </div>
-
-      {/* Inner circle */}
-      {data.innerCircle.map((user, index) => {
-        const angle = (index / data.innerCircle.length) * 2 * Math.PI;
-        const radius = 130;
-        const x = radius * Math.cos(angle) + canvasSize / 2;
-        const y = radius * Math.sin(angle) + canvasSize / 2;
-
-        return (
-          <div
-            key={user.username}
-            className="absolute transform -translate-x-1/2 -translate-y-1/2 z-10"
-            style={{ left: x, top: y }}
-          >
-            <img
-              src={user.pfp_url}
-              alt={user.username}
-              width={innerSize}
-              height={innerSize}
-              className="rounded-full border-2 border-purple-400 shadow-lg"
-              onError={(e) => {
-                e.currentTarget.src = `https://ui-avatars.com/api/?name=${user.username}&size=${innerSize}&background=a855f7&color=ffffff`;
-              }}
-            />
-          </div>
-        );
-      })}
-
-      {/* Outer circle */}
-      {data.outerCircle.map((user, index) => {
-        const angle = (index / data.outerCircle.length) * 2 * Math.PI;
-        const radius = 200;
-        const x = radius * Math.cos(angle) + canvasSize / 2;
-        const y = radius * Math.sin(angle) + canvasSize / 2;
-
-        return (
-          <div
-            key={`outer-${user.username}-${index}`}
-            className="absolute transform -translate-x-1/2 -translate-y-1/2"
-            style={{ left: x, top: y }}
-          >
-            <img
-              src={user.pfp_url}
-              alt={user.username}
-              width={outerSize}
-              height={outerSize}
-              className="rounded-full border-2 border-gray-400 shadow-md"
-              style={{ width: `${outerSize}px`, height: `${outerSize}px`, minWidth: `${outerSize}px`, minHeight: `${outerSize}px` }}
-              onError={(e) => {
-                e.currentTarget.src = `https://ui-avatars.com/api/?name=${user.username}&size=${outerSize}&background=6b7280&color=ffffff`;
-              }}
-            />
-          </div>
-        );
-      })}
     </div>
   );
-};
+}
