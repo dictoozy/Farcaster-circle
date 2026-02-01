@@ -211,21 +211,23 @@ export default function FarcasterCircles() {
           <div className="flex flex-col items-center animate-scale-in">
             <div
               ref={circleRef}
-              className="p-10 bg-white rounded-3xl shadow-sm border border-zinc-100"
+              className="p-8 bg-white rounded-2xl shadow-sm border border-zinc-100"
             >
               <CircleViz data={data} />
             </div>
 
-            {/* Stats */}
+            {/* Legend */}
             <div className="mt-6 flex items-center gap-6 text-sm">
-              <div className="flex items-center gap-2 text-zinc-500">
-                <div className="w-2 h-2 rounded-full bg-indigo-600" />
-                <span>{data.stats.totalInteractions} interactions analyzed</span>
-              </div>
-              <div className="flex items-center gap-2 text-zinc-500">
-                <div className="w-2 h-2 rounded-full bg-orange-500" />
-                <span>{data.innerCircle.length + data.middleCircle.length + data.outerCircle.length} connections</span>
-              </div>
+              {[
+                { title: 'Besties', ring: 'bg-indigo-600' },
+                { title: 'Close friends', ring: 'bg-indigo-400' },
+                { title: 'Homies', ring: 'bg-indigo-200' },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-2 text-zinc-500">
+                  <div className={`w-2 h-2 rounded-full ${item.ring}`} />
+                  <span>{item.title}</span>
+                </div>
+              ))}
             </div>
 
             {/* Action Buttons */}
@@ -291,16 +293,15 @@ export default function FarcasterCircles() {
 
         {/* Footer Info */}
         {!data && !loading && (
-          <div className="mt-16 grid sm:grid-cols-3 gap-6 animate-fade-up stagger-4">
+          <div className="mt-16 flex justify-center gap-8 animate-fade-up stagger-4">
             {[
-              { title: 'Inner Circle', desc: 'Your closest 5 connections', ring: 'bg-indigo-600' },
-              { title: 'Middle Ring', desc: 'Strong connections (5-12)', ring: 'bg-indigo-400' },
-              { title: 'Outer Ring', desc: 'Regular interactions (12-20)', ring: 'bg-indigo-200' },
+              { title: 'Besties', ring: 'bg-indigo-600' },
+              { title: 'Close friends', ring: 'bg-indigo-400' },
+              { title: 'Homies', ring: 'bg-indigo-200' },
             ].map((item, i) => (
-              <div key={i} className="text-center p-6 bg-white rounded-2xl border border-zinc-100">
-                <div className={`w-4 h-4 rounded-full ${item.ring} mx-auto mb-3`} />
-                <h3 className="font-semibold text-zinc-900 mb-1">{item.title}</h3>
-                <p className="text-sm text-zinc-500">{item.desc}</p>
+              <div key={i} className="flex items-center gap-2">
+                <div className={`w-3 h-3 rounded-full ${item.ring}`} />
+                <span className="text-sm text-zinc-600 font-medium">{item.title}</span>
               </div>
             ))}
           </div>
@@ -319,17 +320,17 @@ export default function FarcasterCircles() {
 
 // Circle Visualization Component
 function CircleViz({ data }: { data: CircleData }) {
-  const size = 440;
+  const size = 360;
   const center = size / 2;
 
-  const innerRadius = 85;
-  const middleRadius = 150;
-  const outerRadius = 205;
+  const innerRadius = 58;
+  const middleRadius = 95;
+  const outerRadius = 130;
 
-  const centerSize = 76;
-  const innerSize = 48;
-  const middleSize = 42;
-  const outerSize = 36;
+  const centerSize = 64;
+  const innerSize = 40;
+  const middleSize = 36;
+  const outerSize = 32;
 
   const placeInCircle = (users: User[], radius: number, avatarSize: number, startAngle = -Math.PI / 2) => {
     return users.map((user, i) => {
@@ -428,8 +429,8 @@ function CircleViz({ data }: { data: CircleData }) {
               e.currentTarget.src = `https://api.dicebear.com/7.x/shapes/svg?seed=${data.mainUser.username}`;
             }}
           />
-          <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-center whitespace-nowrap">
-            <span className="text-sm font-semibold text-zinc-900 bg-white px-2 py-1 rounded-full shadow-sm border border-zinc-100">
+          <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 text-center whitespace-nowrap">
+            <span className="text-xs font-semibold text-zinc-900 bg-white px-2 py-1 rounded-full shadow-sm border border-zinc-100">
               @{data.mainUser.username}
             </span>
           </div>
