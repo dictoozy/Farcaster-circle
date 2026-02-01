@@ -320,29 +320,33 @@ export default function FarcasterCircles() {
 
 // Circle Visualization Component - Packed like Twitter Circles
 function CircleViz({ data }: { data: CircleData }) {
-  const avatarSize = 48;
-  const centerSize = 60;
-  const avatarGap = 3;
+  const centerSize = 72;
+  const avatarGap = 2;
 
-  // Each ring's radius based on its avatar count so they're packed along circumference
   const innerCount = data.innerCircle.length || 5;
   const middleCount = data.middleCircle.length || 7;
   const outerCount = data.outerCircle.length || 8;
 
-  // radius = (count * (size + gap)) / (2π), with minimum for center clearance
-  const minInnerRadius = centerSize / 2 + avatarGap + avatarSize / 2;
-  const innerRadius = Math.max(minInnerRadius, (innerCount * (avatarSize + avatarGap)) / (2 * Math.PI));
+  // Inner ring: avatar size calculated so they pack tightly around center
+  // circumference = 2π × (centerSize/2 + gap + avatarSize/2)
+  // For packed: innerCount × (avatarSize + gap) = circumference
+  // Solve for avatarSize given minimum inner radius
+  const minInnerRadius = centerSize / 2 + 8;
+  const innerCircumference = 2 * Math.PI * (minInnerRadius + 30);
+  const innerAvatarSize = Math.min(64, Math.max(48, (innerCircumference / innerCount) - avatarGap));
+  const innerRadius = (innerCount * (innerAvatarSize + avatarGap)) / (2 * Math.PI);
 
-  const minMiddleRadius = innerRadius + avatarSize / 2 + avatarGap + avatarSize / 2;
-  const middleRadius = Math.max(minMiddleRadius, (middleCount * (avatarSize + avatarGap)) / (2 * Math.PI));
+  // Middle and outer: slightly smaller avatars, tightly packed
+  const middleAvatarSize = innerAvatarSize - 4;
+  const middleRadius = innerRadius + innerAvatarSize / 2 + avatarGap + middleAvatarSize / 2;
 
-  const minOuterRadius = middleRadius + avatarSize / 2 + avatarGap + avatarSize / 2;
-  const outerRadius = Math.max(minOuterRadius, (outerCount * (avatarSize + avatarGap)) / (2 * Math.PI));
+  const outerAvatarSize = middleAvatarSize - 4;
+  const outerRadius = middleRadius + middleAvatarSize / 2 + avatarGap + outerAvatarSize / 2;
 
-  const size = Math.ceil((outerRadius + avatarSize / 2 + 8) * 2);
+  const size = Math.ceil((outerRadius + outerAvatarSize / 2 + 12) * 2);
   const center = size / 2;
 
-  const placeInCircle = (users: User[], radius: number, startAngle = -Math.PI / 2) => {
+  const placeInCircle = (users: User[], radius: number, avatarSz: number, startAngle = -Math.PI / 2) => {
     return users.map((user, i) => {
       const angle = startAngle + (i / users.length) * 2 * Math.PI;
       const x = center + radius * Math.cos(angle);
@@ -358,7 +362,7 @@ function CircleViz({ data }: { data: CircleData }) {
             src={user.pfp_url}
             alt={user.username}
             className="rounded-full border-2 border-white shadow-sm"
-            style={{ width: avatarSize, height: avatarSize }}
+            style={{ width: avatarSz, height: avatarSz }}
             onError={(e) => {
               e.currentTarget.src = `https://api.dicebear.com/7.x/shapes/svg?seed=${user.username}`;
             }}
@@ -374,13 +378,13 @@ function CircleViz({ data }: { data: CircleData }) {
   return (
     <div className="relative" style={{ width: size, height: size }}>
       {/* Outer circle */}
-      {placeInCircle(data.outerCircle, outerRadius)}
+      {placeInCircle(data.outerCircle, outerRadius, outerAvatarSize)}
 
       {/* Middle circle */}
-      {placeInCircle(data.middleCircle, middleRadius)}
+      {placeInCircle(data.middleCircle, middleRadius, middleAvatarSize)}
 
       {/* Inner circle */}
-      {placeInCircle(data.innerCircle, innerRadius)}
+      {placeInCircle(data.innerCircle, innerRadius, innerAvatarSize)}
 
       {/* Center user */}
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
