@@ -1,4 +1,4 @@
-// app/api/followers/route.ts - Fixed for new Neynar API
+// app/api/followers/route.ts - Fixed data structure
 import { NextResponse } from 'next/server';
 
 const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY;
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
 
     console.log(`Looking up user: ${username}`);
 
-    // 1. Search for user (new API endpoint)
+    // 1. Search for user
     const searchData = await neynarFetch(`user/search?q=${username}&limit=5`);
     if (!searchData?.result?.users?.length) {
       return NextResponse.json({ message: `User "${username}" not found` }, { status: 404 });
@@ -73,69 +73,40 @@ export async function POST(request: Request) {
       }
     };
 
-    // 3. Get user's feed (their casts)
-    try {
-      const feedData = await neynarFetch(`feed/user/${fid}/replies_and_recasts?limit=50`);
-      console.log(`Feed data: ${feedData?.casts?.length || 0} casts`);
-      
-      // Get reactions on their casts
-      if (feedData?.casts) {
-        for (const cast of feedData.casts.slice(0, 20)) {
-          // Get detailed cast with reactions
-          const castData = await neynarFetch(`cast?identifier=${cast.hash}&type=hash`);
-          if (castData?.cast?.reactions) {
-            // Likes
-            for (const like of castData.cast.reactions.likes || []) {
-              if (like.fid !== fid) {
-                const userData = await neynarFetch(`user/bulk?fids=${like.fid}`);
-                if (userData?.users?.[0]) {
-                  addInteraction(userData.users[0], 1);
-                }
-              }
-            }
-            // Recasts
-            for (const recast of castData.cast.reactions.recasts || []) {
-              if (recast.fid !== fid) {
-                const userData = await neynarFetch(`user/bulk?fids=${recast.fid}`);
-                if (userData?.users?.[0]) {
-                  addInteraction(userData.users[0], 3);
-                }
-              }
-            }
-          }
-        }
-      }
-    } catch (e) {
-      console.error('Error fetching feed:', e);
-    }
-
-    // 4. Get followers as fallback/supplement
+    // 3. Get followers (structure: users[].user)
     try {
       const followersData = await neynarFetch(`followers?fid=${fid}&limit=100`);
-      console.log(`Followers: ${followersData?.users?.length || 0}`);
+      console.log(`Followers response:`, followersData?.users?.length || 0);
       
       if (followersData?.users) {
-        for (const follower of followersData.users) {
-          addInteraction(follower, 0.5);
+        for (const item of followersData.users) {
+          // Data is nested under item.user
+          const user = item.user || item;
+          if (user?.fid && user?.username) {
+            addInteraction(user, 1);
+          }
         }
       }
     } catch (e) {
       console.error('Error fetching followers:', e);
     }
 
-    // 5. Get following
+    // 4. Get following (structure: users[].user)
     try {
       const followingData = await neynarFetch(`following?fid=${fid}&limit=100`);
-      console.log(`Following: ${followingData?.users?.length || 0}`);
+      console.log(`Following response:`, followingData?.users?.length || 0);
       
       if (followingData?.users) {
-        for (const following of followingData.users) {
-          // Mutual follow = higher score
-          if (interactions.has(following.fid)) {
-            const existing = interactions.get(following.fid)!;
-            existing.score += 2; // Bonus for mutual
-          } else {
-            addInteraction(following, 1);
+        for (const item of followingData.users) {
+          const user = item.user || item;
+          if (user?.fid && user?.username) {
+            // Mutual = higher score
+            if (interactions.has(user.fid)) {
+              const existing = interactions.get(user.fid)!;
+              existing.score += 3; // Mutual bonus
+            } else {
+              addInteraction(user, 2);
+            }
           }
         }
       }
@@ -143,7 +114,7 @@ export async function POST(request: Request) {
       console.error('Error fetching following:', e);
     }
 
-    // 6. Sort by score
+    // 5. Sort by score
     const sorted = Array.from(interactions.values())
       .sort((a, b) => b.score - a.score)
       .filter(i => i.user.pfp_url);
