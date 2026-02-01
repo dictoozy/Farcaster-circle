@@ -320,18 +320,23 @@ export default function FarcasterCircles() {
 
 // Circle Visualization Component - Packed like Twitter Circles
 function CircleViz({ data }: { data: CircleData }) {
-  const size = 340;
-  const center = size / 2;
-
-  // Uniform avatar size, center slightly larger
-  const avatarSize = 42;
+  // Calculate radii based on avatar count to ensure packed look
+  const avatarSize = 52;
   const centerSize = 64;
+  const gap = 4; // tiny gap between avatars
 
-  // Packed: ring spacing = avatar + tiny gap (5px)
-  const ringSpacing = avatarSize + 5;
-  const innerRadius = (centerSize / 2) + 5 + (avatarSize / 2);  // 56
-  const middleRadius = innerRadius + ringSpacing;               // 103
-  const outerRadius = middleRadius + ringSpacing;               // 150
+  // For packed circles: circumference ≈ numAvatars * (avatarSize + gap)
+  // So radius = numAvatars * (avatarSize + gap) / (2 * PI)
+  const innerCount = data.innerCircle.length || 5;
+  const middleCount = data.middleCircle.length || 7;
+  const outerCount = data.outerCircle.length || 8;
+
+  const innerRadius = Math.max(40, (innerCount * (avatarSize + gap)) / (2 * Math.PI));
+  const middleRadius = innerRadius + avatarSize + gap;
+  const outerRadius = middleRadius + avatarSize + gap;
+
+  const size = (outerRadius + avatarSize / 2 + 10) * 2;
+  const center = size / 2;
 
   const placeInCircle = (users: User[], radius: number, startAngle = -Math.PI / 2) => {
     return users.map((user, i) => {
