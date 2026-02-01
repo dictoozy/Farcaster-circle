@@ -1,12 +1,20 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Outfit } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const outfit = Outfit({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
 
 export const metadata: Metadata = {
   title: "Farcaster Circle",
-  description: "Visualize your social circles and mint them onchain",
+  description: "Visualize your Farcaster social circles",
+  openGraph: {
+    title: "Farcaster Circle",
+    description: "See who you interact with most on Farcaster",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -16,7 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={outfit.className}>{children}</body>
     </html>
   );
 }
