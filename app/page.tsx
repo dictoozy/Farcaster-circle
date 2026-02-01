@@ -318,19 +318,21 @@ export default function FarcasterCircles() {
   );
 }
 
-// Circle Visualization Component
+// Circle Visualization Component - Compact like Twitter Circles
 function CircleViz({ data }: { data: CircleData }) {
-  const size = 360;
+  const size = 320;
   const center = size / 2;
 
-  const innerRadius = 58;
-  const middleRadius = 95;
-  const outerRadius = 130;
+  // Much tighter radii for compact look
+  const innerRadius = 48;
+  const middleRadius = 78;
+  const outerRadius = 108;
 
-  const centerSize = 64;
-  const innerSize = 40;
-  const middleSize = 36;
-  const outerSize = 32;
+  // Slightly larger avatars to overlap more
+  const centerSize = 72;
+  const innerSize = 44;
+  const middleSize = 40;
+  const outerSize = 36;
 
   const placeInCircle = (users: User[], radius: number, avatarSize: number, startAngle = -Math.PI / 2) => {
     return users.map((user, i) => {
@@ -415,26 +417,19 @@ function CircleViz({ data }: { data: CircleData }) {
       {/* Inner circle (closest friends) */}
       {placeInCircle(data.innerCircle, innerRadius, innerSize)}
 
-      {/* Center user */}
+      {/* Center user - no label, just avatar */}
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
-        <div className="relative">
-          <img
-            src={data.mainUser.pfp_url}
-            alt={data.mainUser.username}
-            width={centerSize}
-            height={centerSize}
-            className="rounded-full border-4 border-indigo-600 orbital-glow"
-            style={{ width: centerSize, height: centerSize }}
-            onError={(e) => {
-              e.currentTarget.src = `https://api.dicebear.com/7.x/shapes/svg?seed=${data.mainUser.username}`;
-            }}
-          />
-          <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 text-center whitespace-nowrap">
-            <span className="text-xs font-semibold text-zinc-900 bg-white px-2 py-1 rounded-full shadow-sm border border-zinc-100">
-              @{data.mainUser.username}
-            </span>
-          </div>
-        </div>
+        <img
+          src={data.mainUser.pfp_url}
+          alt={data.mainUser.username}
+          width={centerSize}
+          height={centerSize}
+          className="rounded-full border-4 border-indigo-600 orbital-glow"
+          style={{ width: centerSize, height: centerSize }}
+          onError={(e) => {
+            e.currentTarget.src = `https://api.dicebear.com/7.x/shapes/svg?seed=${data.mainUser.username}`;
+          }}
+        />
       </div>
     </div>
   );
