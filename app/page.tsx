@@ -320,22 +320,26 @@ export default function FarcasterCircles() {
 
 // Circle Visualization Component - Packed like Twitter Circles
 function CircleViz({ data }: { data: CircleData }) {
-  // Calculate radii based on avatar count to ensure packed look
-  const avatarSize = 52;
-  const centerSize = 64;
-  const gap = 4; // tiny gap between avatars
+  const avatarSize = 48;
+  const centerSize = 60;
+  const avatarGap = 3;
 
-  // For packed circles: circumference ≈ numAvatars * (avatarSize + gap)
-  // So radius = numAvatars * (avatarSize + gap) / (2 * PI)
+  // Each ring's radius based on its avatar count so they're packed along circumference
   const innerCount = data.innerCircle.length || 5;
   const middleCount = data.middleCircle.length || 7;
   const outerCount = data.outerCircle.length || 8;
 
-  const innerRadius = Math.max(40, (innerCount * (avatarSize + gap)) / (2 * Math.PI));
-  const middleRadius = innerRadius + avatarSize + gap;
-  const outerRadius = middleRadius + avatarSize + gap;
+  // radius = (count * (size + gap)) / (2π), with minimum for center clearance
+  const minInnerRadius = centerSize / 2 + avatarGap + avatarSize / 2;
+  const innerRadius = Math.max(minInnerRadius, (innerCount * (avatarSize + avatarGap)) / (2 * Math.PI));
 
-  const size = (outerRadius + avatarSize / 2 + 10) * 2;
+  const minMiddleRadius = innerRadius + avatarSize / 2 + avatarGap + avatarSize / 2;
+  const middleRadius = Math.max(minMiddleRadius, (middleCount * (avatarSize + avatarGap)) / (2 * Math.PI));
+
+  const minOuterRadius = middleRadius + avatarSize / 2 + avatarGap + avatarSize / 2;
+  const outerRadius = Math.max(minOuterRadius, (outerCount * (avatarSize + avatarGap)) / (2 * Math.PI));
+
+  const size = Math.ceil((outerRadius + avatarSize / 2 + 8) * 2);
   const center = size / 2;
 
   const placeInCircle = (users: User[], radius: number, startAngle = -Math.PI / 2) => {
