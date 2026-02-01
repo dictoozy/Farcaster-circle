@@ -67,7 +67,7 @@ export default function FarcasterCircles() {
 
     try {
       const dataUrl = await toPng(circleRef.current, {
-        backgroundColor: '#FFFFFF',
+        backgroundColor: '#E0E7FF',  // indigo-100
         pixelRatio: 2,
       });
       setImageUrl(dataUrl);
@@ -211,7 +211,7 @@ export default function FarcasterCircles() {
           <div className="flex flex-col items-center animate-scale-in">
             <div
               ref={circleRef}
-              className="p-8 bg-white rounded-2xl shadow-sm border border-zinc-100"
+              className="p-5 bg-indigo-100 rounded-2xl"
             >
               <CircleViz data={data} />
             </div>
@@ -318,23 +318,22 @@ export default function FarcasterCircles() {
   );
 }
 
-// Circle Visualization Component - Compact like Twitter Circles
+// Circle Visualization Component - Packed like Twitter Circles
 function CircleViz({ data }: { data: CircleData }) {
-  const size = 320;
+  const size = 340;
   const center = size / 2;
 
-  // Much tighter radii for compact look
-  const innerRadius = 48;
-  const middleRadius = 78;
-  const outerRadius = 108;
+  // Uniform avatar size, center slightly larger
+  const avatarSize = 42;
+  const centerSize = 64;
 
-  // Slightly larger avatars to overlap more
-  const centerSize = 72;
-  const innerSize = 44;
-  const middleSize = 40;
-  const outerSize = 36;
+  // Packed: ring spacing = avatar + tiny gap (5px)
+  const ringSpacing = avatarSize + 5;
+  const innerRadius = (centerSize / 2) + 5 + (avatarSize / 2);  // 56
+  const middleRadius = innerRadius + ringSpacing;               // 103
+  const outerRadius = middleRadius + ringSpacing;               // 150
 
-  const placeInCircle = (users: User[], radius: number, avatarSize: number, startAngle = -Math.PI / 2) => {
+  const placeInCircle = (users: User[], radius: number, startAngle = -Math.PI / 2) => {
     return users.map((user, i) => {
       const angle = startAngle + (i / users.length) * 2 * Math.PI;
       const x = center + radius * Math.cos(angle);
@@ -349,18 +348,14 @@ function CircleViz({ data }: { data: CircleData }) {
           <img
             src={user.pfp_url}
             alt={user.username}
-            width={avatarSize}
-            height={avatarSize}
-            className="rounded-full border-2 border-white shadow-md avatar-hover"
+            className="rounded-full border-2 border-white shadow-sm"
             style={{ width: avatarSize, height: avatarSize }}
             onError={(e) => {
               e.currentTarget.src = `https://api.dicebear.com/7.x/shapes/svg?seed=${user.username}`;
             }}
           />
-          {/* Tooltip */}
-          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-zinc-900 text-white rounded-lg text-xs font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-zinc-900 text-white rounded-lg text-xs font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
             @{user.username}
-            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-zinc-900" />
           </div>
         </div>
       );
@@ -369,62 +364,21 @@ function CircleViz({ data }: { data: CircleData }) {
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
-      {/* Orbital rings */}
-      <svg className="absolute inset-0" width={size} height={size}>
-        {/* Outer ring */}
-        <circle
-          cx={center}
-          cy={center}
-          r={outerRadius}
-          fill="none"
-          stroke="#E4E4E7"
-          strokeWidth="1.5"
-          strokeDasharray="4 4"
-          className="animate-pulse-ring"
-        />
-        {/* Middle ring */}
-        <circle
-          cx={center}
-          cy={center}
-          r={middleRadius}
-          fill="none"
-          stroke="#D4D4D8"
-          strokeWidth="1.5"
-          strokeDasharray="4 4"
-          className="animate-pulse-ring"
-          style={{ animationDelay: '0.5s' }}
-        />
-        {/* Inner ring */}
-        <circle
-          cx={center}
-          cy={center}
-          r={innerRadius}
-          fill="none"
-          stroke="#A1A1AA"
-          strokeWidth="2"
-          strokeDasharray="4 4"
-          className="animate-pulse-ring"
-          style={{ animationDelay: '1s' }}
-        />
-      </svg>
+      {/* Outer circle */}
+      {placeInCircle(data.outerCircle, outerRadius)}
 
-      {/* Outer circle (acquaintances) */}
-      {placeInCircle(data.outerCircle, outerRadius, outerSize)}
+      {/* Middle circle */}
+      {placeInCircle(data.middleCircle, middleRadius)}
 
-      {/* Middle circle (good friends) */}
-      {placeInCircle(data.middleCircle, middleRadius, middleSize)}
+      {/* Inner circle */}
+      {placeInCircle(data.innerCircle, innerRadius)}
 
-      {/* Inner circle (closest friends) */}
-      {placeInCircle(data.innerCircle, innerRadius, innerSize)}
-
-      {/* Center user - no label, just avatar */}
+      {/* Center user */}
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
         <img
           src={data.mainUser.pfp_url}
           alt={data.mainUser.username}
-          width={centerSize}
-          height={centerSize}
-          className="rounded-full border-4 border-indigo-600 orbital-glow"
+          className="rounded-full border-3 border-white shadow-lg"
           style={{ width: centerSize, height: centerSize }}
           onError={(e) => {
             e.currentTarget.src = `https://api.dicebear.com/7.x/shapes/svg?seed=${data.mainUser.username}`;
