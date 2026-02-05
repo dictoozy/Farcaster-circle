@@ -336,11 +336,11 @@ function CircleViz({ data }: { data: CircleData }) {
   const innerAvatarSize = Math.min(64, Math.max(48, (innerCircumference / innerCount) - avatarGap));
   const innerRadius = (innerCount * (innerAvatarSize + avatarGap)) / (2 * Math.PI);
 
-  // Middle and outer: slightly smaller avatars, tightly packed
-  const middleAvatarSize = innerAvatarSize - 4;
+  // Middle: same size, Outer: BIGGER to fill space with fewer profiles
+  const middleAvatarSize = innerAvatarSize;
   const middleRadius = innerRadius + innerAvatarSize / 2 + avatarGap + middleAvatarSize / 2;
 
-  const outerAvatarSize = middleAvatarSize - 4;
+  const outerAvatarSize = innerAvatarSize + 8; // BIGGER outer avatars
   const outerRadius = middleRadius + middleAvatarSize / 2 + avatarGap + outerAvatarSize / 2;
 
   const size = Math.ceil((outerRadius + outerAvatarSize / 2 + 12) * 2);
@@ -377,14 +377,14 @@ function CircleViz({ data }: { data: CircleData }) {
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
-      {/* Outer circle */}
-      {placeInCircle(data.outerCircle, outerRadius, outerAvatarSize)}
+      {/* Outer circle - offset to stagger */}
+      {placeInCircle(data.outerCircle, outerRadius, outerAvatarSize, -Math.PI/2 + Math.PI/outerCount)}
 
       {/* Middle circle */}
       {placeInCircle(data.middleCircle, middleRadius, middleAvatarSize)}
 
-      {/* Inner circle */}
-      {placeInCircle(data.innerCircle, innerRadius, innerAvatarSize)}
+      {/* Inner circle - offset to stagger */}
+      {placeInCircle(data.innerCircle, innerRadius, innerAvatarSize, -Math.PI/2 + Math.PI/innerCount)}
 
       {/* Center user */}
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
