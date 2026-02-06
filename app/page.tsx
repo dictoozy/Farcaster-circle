@@ -201,23 +201,14 @@ export default function FarcasterCircles() {
 
   return (
     <main className="min-h-screen bg-[#FAFAFA]">
-      {/* Compact Header for Mini App */}
-      <header className="border-b border-zinc-200">
-        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-center">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white">
-                <circle cx="12" cy="12" r="3" fill="currentColor" />
-                <circle cx="12" cy="12" r="7" stroke="currentColor" strokeWidth="1.5" fill="none" opacity="0.5" />
-                <circle cx="12" cy="12" r="11" stroke="currentColor" strokeWidth="1.5" fill="none" opacity="0.25" />
-              </svg>
-            </div>
-            <span className="text-lg font-semibold text-zinc-900">Farcaster Circle</span>
-          </div>
+      {/* Minimal Header for Mini App */}
+      <header className="bg-white">
+        <div className="px-3 py-2 flex items-center justify-center">
+          <span className="text-base font-semibold text-zinc-900">🟣 Farcaster Circle</span>
         </div>
       </header>
 
-      <div className="max-w-lg mx-auto px-4 py-4">
+      <div className="px-3 py-2">
         {/* Hero Section - Compact for Mini App */}
         {!data && !loading && (
           <div className="text-center mb-4 animate-fade-up">
@@ -381,24 +372,24 @@ export default function FarcasterCircles() {
   );
 }
 
-// Circle Visualization - More avatars (7-11-18) - Responsive
+// Circle Visualization - Compact for Mini App
 function CircleViz({ data }: { data: CircleData }) {
-  // Responsive size - max 380px for mobile, scales down
-  const size = 380;
+  // Small size for mini app viewport
+  const size = 300;
   const center = size / 2;
   
   // Center avatar
-  const centerSize = 56;
+  const centerSize = 44;
   
-  // Ring radii - scaled for mobile
-  const innerRadius = 52;    // 7 avatars
-  const middleRadius = 95;   // 11 avatars
-  const outerRadius = 150;   // 18 avatars
+  // Ring radii - compact
+  const innerRadius = 42;    // 7 avatars
+  const middleRadius = 76;   // 11 avatars
+  const outerRadius = 120;   // 18 avatars
   
-  // Avatar sizes - smaller for mobile
-  const innerAvatarSize = 38;
-  const middleAvatarSize = 34;
-  const outerAvatarSize = 32;
+  // Avatar sizes - tiny for mobile
+  const innerAvatarSize = 30;
+  const middleAvatarSize = 26;
+  const outerAvatarSize = 24;
 
   const placeInCircle = (users: User[], radius: number, avatarSz: number, startAngle = -Math.PI / 2) => {
     return users.map((user, i) => {
