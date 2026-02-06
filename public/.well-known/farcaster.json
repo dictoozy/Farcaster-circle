@@ -2,7 +2,7 @@
   "frame": {
     "name": "Farcaster Circle",
     "version": "1",
-    "iconUrl": "https://api.dicebear.com/7.x/shapes/png?seed=farcaster-circle&backgroundColor=6366f1&size=200",
+    "iconUrl": "https://farcaster-circle-real.vercel.app/icon.png",
     "homeUrl": "https://farcaster-circle-real.vercel.app",
     "subtitle": "See your social circle",
     "description": "Visualize who you interact with most on Farcaster. Generate your circle, share it, or mint it as an NFT on Base.",
