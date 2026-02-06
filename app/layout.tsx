@@ -13,7 +13,15 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Farcaster Circle",
     description: "See who you interact with most on Farcaster",
+    images: ["https://farcaster-circle-real.vercel.app/icon.svg"],
     type: "website",
+  },
+  other: {
+    "fc:frame": "vNext",
+    "fc:frame:image": "https://farcaster-circle-real.vercel.app/icon.svg",
+    "fc:frame:button:1": "Open App",
+    "fc:frame:button:1:action": "launch_frame",
+    "fc:frame:button:1:target": "https://farcaster-circle-real.vercel.app",
   },
 };
 
