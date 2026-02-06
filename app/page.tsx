@@ -413,24 +413,24 @@ export default function FarcasterCircles() {
   );
 }
 
-// Circle Visualization - Simple fixed layout like Twitter Circles
+// Circle Visualization - Fixed layout with proper sizing
 function CircleViz({ data }: { data: CircleData }) {
-  // FIXED sizes - no dynamic calculation
-  const size = 380;
+  // Container must be big enough: outerRadius + outerAvatarSize/2 + padding
+  const size = 440;
   const center = size / 2;
   
   // Center avatar
-  const centerSize = 80;
+  const centerSize = 76;
   
-  // FIXED ring radii - evenly spaced
-  const innerRadius = 70;    // First ring
-  const middleRadius = 125;  // Second ring  
-  const outerRadius = 175;   // Third ring (close to edge)
+  // Ring radii - must fit within container
+  const innerRadius = 68;
+  const middleRadius = 118;
+  const outerRadius = 168;
   
-  // Avatar sizes - OUTER IS BIGGER to fill space
-  const innerAvatarSize = 50;
-  const middleAvatarSize = 54;
-  const outerAvatarSize = 58;  // Biggest!
+  // Avatar sizes - all same size for cleaner look
+  const innerAvatarSize = 52;
+  const middleAvatarSize = 52;
+  const outerAvatarSize = 56;
 
   const placeInCircle = (users: User[], radius: number, avatarSz: number, startAngle = -Math.PI / 2) => {
     return users.map((user, i) => {
@@ -447,8 +447,8 @@ function CircleViz({ data }: { data: CircleData }) {
           <img
             src={user.pfp_url}
             alt={user.username}
-            className="rounded-full border-2 border-white shadow-sm"
-            style={{ width: avatarSz, height: avatarSz }}
+            className="rounded-full border-2 border-white shadow-sm object-cover"
+            style={{ width: avatarSz, height: avatarSz, minWidth: avatarSz, minHeight: avatarSz, aspectRatio: '1/1' }}
             onError={(e) => {
               e.currentTarget.src = `https://api.dicebear.com/7.x/shapes/svg?seed=${user.username}`;
             }}
