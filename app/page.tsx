@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { toPng } from 'html-to-image';
 import { parseAbi, encodeFunctionData } from 'viem';
 import sdk from '@farcaster/frame-sdk';
@@ -37,6 +37,11 @@ export default function FarcasterCircles() {
   const [isMinting, setIsMinting] = useState(false);
   const [mintSuccess, setMintSuccess] = useState<string | null>(null);
   const circleRef = useRef<HTMLDivElement>(null);
+
+  // Tell Farcaster the app is ready (dismisses splash screen)
+  useEffect(() => {
+    sdk.actions.ready();
+  }, []);
 
   const generateCircle = async () => {
     if (!username.trim()) {
@@ -196,61 +201,53 @@ export default function FarcasterCircles() {
 
   return (
     <main className="min-h-screen bg-[#FAFAFA]">
-      {/* Header */}
+      {/* Compact Header for Mini App */}
       <header className="border-b border-zinc-200">
-        <div className="max-w-4xl mx-auto px-6 py-5 flex items-center justify-between">
-          <div className="flex items-center gap-3 animate-fade-up stagger-1">
-            <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-white">
+        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-center">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white">
                 <circle cx="12" cy="12" r="3" fill="currentColor" />
                 <circle cx="12" cy="12" r="7" stroke="currentColor" strokeWidth="1.5" fill="none" opacity="0.5" />
                 <circle cx="12" cy="12" r="11" stroke="currentColor" strokeWidth="1.5" fill="none" opacity="0.25" />
               </svg>
             </div>
-            <span className="text-xl font-semibold text-zinc-900">Farcaster Circle</span>
+            <span className="text-lg font-semibold text-zinc-900">Farcaster Circle</span>
           </div>
-          <a
-            href="https://warpcast.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-zinc-500 hover:text-indigo-600 transition-colors animate-fade-up stagger-2"
-          >
-            Open Warpcast →
-          </a>
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-6 py-12">
-        {/* Hero Section */}
+      <div className="max-w-lg mx-auto px-4 py-4">
+        {/* Hero Section - Compact for Mini App */}
         {!data && !loading && (
-          <div className="text-center mb-12 animate-fade-up">
-            <h1 className="text-4xl sm:text-5xl font-bold text-zinc-900 mb-4 tracking-tight">
-              Your social orbit
+          <div className="text-center mb-4 animate-fade-up">
+            <h1 className="text-2xl font-bold text-zinc-900 mb-2">
+              Your Farcaster Circle
             </h1>
-            <p className="text-lg text-zinc-500 max-w-md mx-auto">
-              See who you interact with most on Farcaster, visualized in concentric circles.
+            <p className="text-sm text-zinc-500">
+              See who you interact with most
             </p>
           </div>
         )}
 
-        {/* Input Section */}
-        <div className="max-w-md mx-auto mb-10 animate-fade-up stagger-2">
-          <div className="flex gap-3">
+        {/* Input Section - Compact */}
+        <div className="mb-4">
+          <div className="flex gap-2">
             <div className="flex-1 relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 font-medium">@</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 font-medium text-sm">@</span>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && generateCircle()}
                 placeholder="username"
-                className="w-full pl-9 pr-4 py-3.5 bg-white border-2 border-zinc-200 rounded-xl text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 transition-colors font-medium"
+                className="w-full pl-7 pr-3 py-2.5 bg-white border-2 border-zinc-200 rounded-xl text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 transition-colors font-medium text-sm"
               />
             </div>
             <button
               onClick={generateCircle}
               disabled={loading}
-              className="px-7 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold disabled:opacity-50 transition-colors btn-press"
+              className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold disabled:opacity-50 transition-colors text-sm"
             >
               {loading ? (
                 <span className="flex items-center gap-2">
@@ -308,61 +305,31 @@ export default function FarcasterCircles() {
               ))}
             </div>
 
-            {/* Action Buttons */}
-            <div className="mt-8 flex flex-wrap gap-3 justify-center">
+            {/* Action Buttons - Compact for Mini App */}
+            <div className="mt-4 flex flex-wrap gap-2 justify-center">
               <button
                 onClick={shareToFarcaster}
-                className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold flex items-center gap-2 transition-colors btn-press"
+                className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium flex items-center gap-1.5 transition-colors text-sm"
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3V2z" />
                 </svg>
-                Share on Warpcast
+                Share
               </button>
 
               <button
                 onClick={copyImageToClipboard}
-                className="px-6 py-3 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-xl font-semibold flex items-center gap-2 transition-colors btn-press"
+                className="px-3 py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-lg font-medium flex items-center gap-1.5 transition-colors text-sm"
               >
-                {copied ? (
-                  <>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                    </svg>
-                    Copy Image
-                  </>
-                )}
+                {copied ? '✓ Copied' : 'Copy'}
               </button>
 
               <button
                 onClick={mintCircle}
                 disabled={isMinting}
-                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl font-semibold flex items-center gap-2 transition-colors btn-press disabled:opacity-50"
+                className="px-3 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg font-medium flex items-center gap-1.5 transition-colors text-sm disabled:opacity-50"
               >
-                {isMinting ? (
-                  <>
-                    <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
-                      <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-                    </svg>
-                    Minting...
-                  </>
-                ) : (
-                  <>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                    </svg>
-                    Mint NFT
-                  </>
-                )}
+                {isMinting ? 'Minting...' : '🎨 Mint'}
               </button>
             </div>
 
@@ -414,24 +381,24 @@ export default function FarcasterCircles() {
   );
 }
 
-// Circle Visualization - More avatars (7-11-18)
+// Circle Visualization - More avatars (7-11-18) - Responsive
 function CircleViz({ data }: { data: CircleData }) {
-  // Bigger container for more avatars
-  const size = 480;
+  // Responsive size - max 380px for mobile, scales down
+  const size = 380;
   const center = size / 2;
   
   // Center avatar
-  const centerSize = 72;
+  const centerSize = 56;
   
-  // Ring radii - spaced for 7-11-18 avatars
-  const innerRadius = 62;    // 7 avatars
-  const middleRadius = 115;  // 11 avatars
-  const outerRadius = 185;   // 18 avatars
+  // Ring radii - scaled for mobile
+  const innerRadius = 52;    // 7 avatars
+  const middleRadius = 95;   // 11 avatars
+  const outerRadius = 150;   // 18 avatars
   
-  // Avatar sizes - smaller to fit more
-  const innerAvatarSize = 46;
-  const middleAvatarSize = 44;
-  const outerAvatarSize = 42;
+  // Avatar sizes - smaller for mobile
+  const innerAvatarSize = 38;
+  const middleAvatarSize = 34;
+  const outerAvatarSize = 32;
 
   const placeInCircle = (users: User[], radius: number, avatarSz: number, startAngle = -Math.PI / 2) => {
     return users.map((user, i) => {
