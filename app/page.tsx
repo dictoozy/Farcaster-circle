@@ -2,6 +2,8 @@
 
 import { useState, useRef } from 'react';
 import { toPng } from 'html-to-image';
+import { createWalletClient, createPublicClient, custom, http, parseAbi } from 'viem';
+import { baseSepolia } from 'viem/chains';
 
 interface User {
   pfp_url: string;
@@ -21,6 +23,10 @@ interface CircleData {
   };
 }
 
+// Your deployed contract on Base Sepolia
+const CONTRACT_ADDRESS = '0xD7c7d560De9C40E0bADfC68B8a9F9A9e1F31F67E';
+const CONTRACT_ABI = parseAbi(['function mintCircle(string memory uri) external']);
+
 export default function FarcasterCircles() {
   const [username, setUsername] = useState('');
   const [data, setData] = useState<CircleData | null>(null);
@@ -28,6 +34,8 @@ export default function FarcasterCircles() {
   const [error, setError] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [isMinting, setIsMinting] = useState(false);
+  const [mintSuccess, setMintSuccess] = useState<string | null>(null);
   const circleRef = useRef<HTMLDivElement>(null);
 
   const generateCircle = async () => {
@@ -113,6 +121,75 @@ export default function FarcasterCircles() {
       setTimeout(() => setCopied(false), 2000);
     } catch {
       downloadImage();
+    }
+  };
+
+  // Mint NFT on Base Sepolia
+  const mintCircle = async () => {
+    if (!data || !circleRef.current) {
+      setError('Generate a circle first');
+      return;
+    }
+
+    // @ts-expect-error - window.ethereum exists when wallet is installed
+    if (typeof window === 'undefined' || !window.ethereum) {
+      setError('Please install a wallet (MetaMask, Coinbase Wallet, etc.)');
+      return;
+    }
+
+    setIsMinting(true);
+    setError(null);
+    setMintSuccess(null);
+
+    try {
+      // Connect wallet
+      // @ts-expect-error - window.ethereum
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      
+      const walletClient = createWalletClient({
+        account: accounts[0] as `0x${string}`,
+        chain: baseSepolia,
+        // @ts-expect-error - window.ethereum
+        transport: custom(window.ethereum)
+      });
+
+      // Create metadata
+      const metadata = {
+        name: `Farcaster Circle - ${data.mainUser.display_name}`,
+        description: `Social circle visualization for @${data.mainUser.username}`,
+        image: imageUrl || 'https://via.placeholder.com/400x400/6366f1/ffffff?text=Farcaster+Circle',
+        attributes: [
+          { trait_type: 'Username', value: data.mainUser.username },
+          { trait_type: 'Inner Circle', value: data.innerCircle.length },
+          { trait_type: 'Middle Circle', value: data.middleCircle.length },
+          { trait_type: 'Outer Circle', value: data.outerCircle.length },
+        ],
+      };
+      
+      const metadataUri = `data:application/json;base64,${btoa(JSON.stringify(metadata))}`;
+
+      // Simulate and send transaction
+      const publicClient = createPublicClient({
+        chain: baseSepolia,
+        transport: http(),
+      });
+
+      const { request } = await publicClient.simulateContract({
+        address: CONTRACT_ADDRESS as `0x${string}`,
+        abi: CONTRACT_ABI,
+        functionName: 'mintCircle',
+        args: [metadataUri],
+        account: accounts[0] as `0x${string}`,
+      });
+
+      const hash = await walletClient.writeContract(request);
+      setMintSuccess(hash);
+      
+    } catch (err) {
+      console.error('Mint error:', err);
+      setError(err instanceof Error ? err.message : 'Minting failed');
+    } finally {
+      setIsMinting(false);
     }
   };
 
@@ -265,17 +342,35 @@ export default function FarcasterCircles() {
               </button>
 
               <button
-                onClick={downloadImage}
-                className="px-6 py-3 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-xl font-semibold flex items-center gap-2 transition-colors btn-press"
+                onClick={mintCircle}
+                disabled={isMinting}
+                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl font-semibold flex items-center gap-2 transition-colors btn-press disabled:opacity-50"
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="7 10 12 15 17 10" />
-                  <line x1="12" y1="15" x2="12" y2="3" />
-                </svg>
-                Download
+                {isMinting ? (
+                  <>
+                    <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
+                      <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                    </svg>
+                    Minting...
+                  </>
+                ) : (
+                  <>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                    </svg>
+                    Mint NFT
+                  </>
+                )}
               </button>
             </div>
+
+            {/* Mint Success Message */}
+            {mintSuccess && (
+              <div className="mt-4 p-4 bg-green-100 border border-green-300 rounded-xl text-green-800 text-sm">
+                ✅ Minted! <a href={`https://sepolia.basescan.org/tx/${mintSuccess}`} target="_blank" rel="noopener noreferrer" className="underline">View on BaseScan</a>
+              </div>
+            )}
 
             {/* Generate Another */}
             <button
