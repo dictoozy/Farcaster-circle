@@ -413,37 +413,27 @@ export default function FarcasterCircles() {
   );
 }
 
-// Circle Visualization - Organic layout like Twitter Circles
+// Circle Visualization - Simple fixed layout like Twitter Circles
 function CircleViz({ data }: { data: CircleData }) {
-  const size = 400;
+  // FIXED sizes - no dynamic calculation
+  const size = 380;
   const center = size / 2;
   
   // Center avatar
   const centerSize = 80;
   
-  // Base ring radii
-  const innerRadius = 72;
-  const middleRadius = 128;
-  const outerRadius = 178;
+  // FIXED ring radii - evenly spaced
+  const innerRadius = 70;    // First ring
+  const middleRadius = 125;  // Second ring  
+  const outerRadius = 175;   // Third ring (close to edge)
   
-  // Avatar sizes - OUTER IS BIGGER
-  const innerAvatarSize = 52;
-  const middleAvatarSize = 56;
-  const outerAvatarSize = 60;
+  // Avatar sizes - OUTER IS BIGGER to fill space
+  const innerAvatarSize = 50;
+  const middleAvatarSize = 54;
+  const outerAvatarSize = 58;  // Biggest!
 
-  // Seeded random for consistent variation
-  const seededRandom = (seed: number) => {
-    const x = Math.sin(seed * 9999) * 10000;
-    return x - Math.floor(x);
-  };
-
-  const placeInCircle = (users: User[], baseRadius: number, avatarSz: number, startAngle = -Math.PI / 2) => {
+  const placeInCircle = (users: User[], radius: number, avatarSz: number, startAngle = -Math.PI / 2) => {
     return users.map((user, i) => {
-      // Add radius variation per avatar (±15px)
-      const seed = user.username.split('').reduce((a, c) => a + c.charCodeAt(0), i);
-      const radiusOffset = (seededRandom(seed) - 0.5) * 30;
-      const radius = baseRadius + radiusOffset;
-      
       const angle = startAngle + (i / users.length) * 2 * Math.PI;
       const x = center + radius * Math.cos(angle);
       const y = center + radius * Math.sin(angle);
