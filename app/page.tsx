@@ -23,8 +23,8 @@ interface CircleData {
   };
 }
 
-// Your deployed contract on Base Sepolia
-const CONTRACT_ADDRESS = '0xD7c7d560De9C40E0bADfC68B8a9F9A9e1F31F67E';
+// Your deployed contract on Base Mainnet
+const CONTRACT_ADDRESS = '0x277f895914FE1e98c22dA7cE19DBD31361372e04';
 const CONTRACT_ABI = parseAbi(['function mintCircle(string memory uri) external']);
 
 export default function FarcasterCircles() {
@@ -36,12 +36,30 @@ export default function FarcasterCircles() {
   const [copied, setCopied] = useState(false);
   const [isMinting, setIsMinting] = useState(false);
   const [mintSuccess, setMintSuccess] = useState<string | null>(null);
+  const [appReady, setAppReady] = useState(false);
   const circleRef = useRef<HTMLDivElement>(null);
 
-  // Tell Farcaster the app is ready (dismisses splash screen)
+  // Initialize app and dismiss Farcaster splash screen
   useEffect(() => {
-    sdk.actions.ready();
+    const init = async () => {
+      // Small delay for smooth transition
+      await new Promise(r => setTimeout(r, 500));
+      sdk.actions.ready();
+      setAppReady(true);
+    };
+    init();
   }, []);
+
+  // Show loading screen while app initializes
+  if (!appReady) {
+    return (
+      <div className="min-h-screen bg-[#FAFAFA] flex flex-col items-center justify-center">
+        <div className="text-4xl mb-4">🟣</div>
+        <div className="text-lg font-semibold text-zinc-700">Farcaster Circle</div>
+        <div className="mt-4 w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   const generateCircle = async () => {
     if (!username.trim()) {
