@@ -1,16 +1,24 @@
 {
-  "accountAssociation": {
-    "header": "eyJmaWQiOjEyMzQ1LCJ0eXBlIjoiY3VzdG9keSIsImtleSI6IjB4Li4uIn0",
-    "payload": "eyJkb21haW4iOiJmYXJjYXN0ZXItY2lyY2xlLXJlYWwudmVyY2VsLmFwcCJ9",
-    "signature": "NEEDS_TO_BE_SIGNED"
-  },
   "frame": {
-    "version": "1",
     "name": "Farcaster Circle",
-    "iconUrl": "https://farcaster-circle-real.vercel.app/icon.png",
+    "version": "1",
+    "iconUrl": "https://farcaster-circle-real.vercel.app/icon.svg",
     "homeUrl": "https://farcaster-circle-real.vercel.app",
-    "splashImageUrl": "https://farcaster-circle-real.vercel.app/splash.png",
+    "subtitle": "See your Farcaster social circle",
+    "description": "Visualize who you interact with most on Farcaster. Generate your circle, share it, or mint it as an NFT on Base.",
+    "primaryCategory": "social",
+    "splashImageUrl": "https://farcaster-circle-real.vercel.app/splash.svg",
     "splashBackgroundColor": "#6366f1",
-    "webhookUrl": ""
+    "ogTitle": "Find your friends! ",
+    "tags": [
+      "social",
+      "friends",
+      "base"
+    ]
+  },
+  "accountAssociation": {
+    "header": "eyJmaWQiOjI5ODQ1MywidHlwZSI6ImF1dGgiLCJrZXkiOiIweDgxYTZDMzE4OTVEMEEzZTI5QkNlOGU5NTEzZjM2NjZmNzgxOTI1YiJ9",
+    "payload": "eyJkb21haW4iOiJmYXJjYXN0ZXItY2lyY2xlLXJlYWwudmVyY2VsLmFwcCJ9",
+    "signature": "h4Hf8iYHYRVVfTEEkc2kxV3pTdidEFYqM9eHiwnh1LdakVAmtkjHQ/D/QwWnZ8pbErBqSanbxLCCr2owYjtvPBs="
   }
 }
