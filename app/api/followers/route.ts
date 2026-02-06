@@ -128,16 +128,16 @@ export async function POST(request: Request) {
       score: i.score,
     });
 
-    // 3 circles
+    // 3 circles - more profiles: 7 + 11 + 18 = 36 total
     const response = {
       mainUser: {
         pfp_url: mainUser.pfp_url,
         username: mainUser.username,
         display_name: mainUser.display_name || mainUser.username,
       },
-      innerCircle: sorted.slice(0, 5).map(formatUser),
-      middleCircle: sorted.slice(5, 12).map(formatUser),
-      outerCircle: sorted.slice(12, 20).map(formatUser),
+      innerCircle: sorted.slice(0, 7).map(formatUser),
+      middleCircle: sorted.slice(7, 18).map(formatUser),
+      outerCircle: sorted.slice(18, 36).map(formatUser),
       stats: {
         totalInteractions: sorted.length,
         topScore: sorted[0]?.score || 0,

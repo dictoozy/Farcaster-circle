@@ -2,8 +2,8 @@
 
 import { useState, useRef } from 'react';
 import { toPng } from 'html-to-image';
-import { createWalletClient, createPublicClient, custom, http, parseAbi } from 'viem';
-import { baseSepolia } from 'viem/chains';
+import { parseAbi, encodeFunctionData } from 'viem';
+import sdk from '@farcaster/frame-sdk';
 
 interface User {
   pfp_url: string;
@@ -124,16 +124,10 @@ export default function FarcasterCircles() {
     }
   };
 
-  // Mint NFT on Base Sepolia
+  // Mint NFT using Farcaster wallet (for mini apps)
   const mintCircle = async () => {
     if (!data || !circleRef.current) {
       setError('Generate a circle first');
-      return;
-    }
-
-    // @ts-expect-error - window.ethereum exists when wallet is installed
-    if (typeof window === 'undefined' || !window.ethereum) {
-      setError('Please install a wallet (MetaMask, Coinbase Wallet, etc.)');
       return;
     }
 
@@ -142,19 +136,17 @@ export default function FarcasterCircles() {
     setMintSuccess(null);
 
     try {
-      // Connect wallet
-      // @ts-expect-error - window.ethereum
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      // Get Farcaster context
+      const context = await sdk.context;
       
-      const walletClient = createWalletClient({
-        account: accounts[0] as `0x${string}`,
-        chain: baseSepolia,
-        // @ts-expect-error - window.ethereum
-        transport: custom(window.ethereum)
-      });
+      if (!context?.user?.fid) {
+        setError('Please open this in Warpcast');
+        setIsMinting(false);
+        return;
+      }
 
       // Create metadata
-      const metadata = {
+      const nftMetadata: { name: string; description: string; image: string; attributes: Array<{ trait_type: string; value: string | number }> } = {
         name: `Farcaster Circle - ${data.mainUser.display_name}`,
         description: `Social circle visualization for @${data.mainUser.username}`,
         image: imageUrl || 'https://via.placeholder.com/400x400/6366f1/ffffff?text=Farcaster+Circle',
@@ -166,23 +158,32 @@ export default function FarcasterCircles() {
         ],
       };
       
-      const metadataUri = `data:application/json;base64,${btoa(JSON.stringify(metadata))}`;
+      const metadataUri = `data:application/json;base64,${btoa(JSON.stringify(nftMetadata))}`;
 
-      // Simulate and send transaction
-      const publicClient = createPublicClient({
-        chain: baseSepolia,
-        transport: http(),
-      });
+      // Get Farcaster wallet provider
+      const provider = sdk.wallet.ethProvider;
+      
+      // Request accounts
+      const accounts = await provider.request({ method: 'eth_requestAccounts' }) as string[];
+      const address = accounts[0] as `0x${string}`;
 
-      const { request } = await publicClient.simulateContract({
-        address: CONTRACT_ADDRESS as `0x${string}`,
+      // Encode function call
+      const txData = encodeFunctionData({
         abi: CONTRACT_ABI,
         functionName: 'mintCircle',
         args: [metadataUri],
-        account: accounts[0] as `0x${string}`,
       });
 
-      const hash = await walletClient.writeContract(request);
+      // Send transaction via Farcaster wallet
+      const hash = await provider.request({
+        method: 'eth_sendTransaction',
+        params: [{
+          from: address,
+          to: CONTRACT_ADDRESS,
+          data: txData,
+        }],
+      }) as string;
+      
       setMintSuccess(hash);
       
     } catch (err) {
@@ -368,7 +369,7 @@ export default function FarcasterCircles() {
             {/* Mint Success Message */}
             {mintSuccess && (
               <div className="mt-4 p-4 bg-green-100 border border-green-300 rounded-xl text-green-800 text-sm">
-                ✅ Minted! <a href={`https://sepolia.basescan.org/tx/${mintSuccess}`} target="_blank" rel="noopener noreferrer" className="underline">View on BaseScan</a>
+                ✅ Minted! <a href={`https://basescan.org/tx/${mintSuccess}`} target="_blank" rel="noopener noreferrer" className="underline">View on BaseScan</a>
               </div>
             )}
 
@@ -413,24 +414,24 @@ export default function FarcasterCircles() {
   );
 }
 
-// Circle Visualization - Fixed layout with proper sizing
+// Circle Visualization - More avatars (7-11-18)
 function CircleViz({ data }: { data: CircleData }) {
-  // Container must be big enough: outerRadius + outerAvatarSize/2 + padding
-  const size = 440;
+  // Bigger container for more avatars
+  const size = 480;
   const center = size / 2;
   
   // Center avatar
-  const centerSize = 76;
+  const centerSize = 72;
   
-  // Ring radii - must fit within container
-  const innerRadius = 68;
-  const middleRadius = 118;
-  const outerRadius = 168;
+  // Ring radii - spaced for 7-11-18 avatars
+  const innerRadius = 62;    // 7 avatars
+  const middleRadius = 115;  // 11 avatars
+  const outerRadius = 185;   // 18 avatars
   
-  // Avatar sizes - all same size for cleaner look
-  const innerAvatarSize = 52;
-  const middleAvatarSize = 52;
-  const outerAvatarSize = 56;
+  // Avatar sizes - smaller to fit more
+  const innerAvatarSize = 46;
+  const middleAvatarSize = 44;
+  const outerAvatarSize = 42;
 
   const placeInCircle = (users: User[], radius: number, avatarSz: number, startAngle = -Math.PI / 2) => {
     return users.map((user, i) => {
