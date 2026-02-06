@@ -168,11 +168,18 @@ export default function FarcasterCircles() {
         return;
       }
 
-      // Create metadata
-      const nftMetadata: { name: string; description: string; image: string; attributes: Array<{ trait_type: string; value: string | number }> } = {
-        name: `Farcaster Circle - ${data.mainUser.display_name}`,
-        description: `Social circle visualization for @${data.mainUser.username}`,
-        image: imageUrl || 'https://via.placeholder.com/400x400/6366f1/ffffff?text=Farcaster+Circle',
+      // Capture the circle as image
+      const circleImage = await captureImage();
+      if (!circleImage) {
+        setError('Failed to capture image');
+        setIsMinting(false);
+        return;
+      }
+
+      // Upload image and create metadata
+      const metadata = {
+        name: `Farcaster Circle - @${data.mainUser.username}`,
+        description: `Social circle visualization for @${data.mainUser.username} on Farcaster`,
         attributes: [
           { trait_type: 'Username', value: data.mainUser.username },
           { trait_type: 'Inner Circle', value: data.innerCircle.length },
@@ -180,8 +187,20 @@ export default function FarcasterCircles() {
           { trait_type: 'Outer Circle', value: data.outerCircle.length },
         ],
       };
-      
-      const metadataUri = `data:application/json;base64,${btoa(JSON.stringify(nftMetadata))}`;
+
+      const uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: circleImage, metadata }),
+      });
+
+      if (!uploadRes.ok) {
+        setError('Failed to upload image');
+        setIsMinting(false);
+        return;
+      }
+
+      const { metadataUri } = await uploadRes.json();
 
       // Get Farcaster wallet provider
       const provider = sdk.wallet.ethProvider;
