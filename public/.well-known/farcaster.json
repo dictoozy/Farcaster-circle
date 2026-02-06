@@ -4,7 +4,7 @@
     "version": "1",
     "iconUrl": "https://farcaster-circle-real.vercel.app/icon.svg",
     "homeUrl": "https://farcaster-circle-real.vercel.app",
-    "subtitle": "See your Farcaster social circle",
+    "subtitle": "See your social circle",
     "description": "Visualize who you interact with most on Farcaster. Generate your circle, share it, or mint it as an NFT on Base.",
     "primaryCategory": "social",
     "splashImageUrl": "https://farcaster-circle-real.vercel.app/splash.svg",
