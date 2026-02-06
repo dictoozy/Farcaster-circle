@@ -1,0 +1,16 @@
+{
+  "accountAssociation": {
+    "header": "eyJmaWQiOjEyMzQ1LCJ0eXBlIjoiY3VzdG9keSIsImtleSI6IjB4Li4uIn0",
+    "payload": "eyJkb21haW4iOiJmYXJjYXN0ZXItY2lyY2xlLXJlYWwudmVyY2VsLmFwcCJ9",
+    "signature": "NEEDS_TO_BE_SIGNED"
+  },
+  "frame": {
+    "version": "1",
+    "name": "Farcaster Circle",
+    "iconUrl": "https://farcaster-circle-real.vercel.app/icon.png",
+    "homeUrl": "https://farcaster-circle-real.vercel.app",
+    "splashImageUrl": "https://farcaster-circle-real.vercel.app/splash.png",
+    "splashBackgroundColor": "#6366f1",
+    "webhookUrl": ""
+  }
+}
