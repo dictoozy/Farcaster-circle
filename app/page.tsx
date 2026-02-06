@@ -379,17 +379,17 @@ function CircleViz({ data }: { data: CircleData }) {
   const center = size / 2;
   
   // Center avatar
-  const centerSize = 44;
+  const centerSize = 48;
   
-  // Ring radii - compact
+  // Ring radii - same positions
   const innerRadius = 42;    // 7 avatars
   const middleRadius = 76;   // 11 avatars
   const outerRadius = 120;   // 18 avatars
   
-  // Avatar sizes - tiny for mobile
-  const innerAvatarSize = 30;
-  const middleAvatarSize = 26;
-  const outerAvatarSize = 24;
+  // Avatar sizes - slightly bigger, no overlap
+  const innerAvatarSize = 34;
+  const middleAvatarSize = 30;
+  const outerAvatarSize = 28;
 
   const placeInCircle = (users: User[], radius: number, avatarSz: number, startAngle = -Math.PI / 2) => {
     return users.map((user, i) => {
