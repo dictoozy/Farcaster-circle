@@ -318,33 +318,24 @@ export default function FarcasterCircles() {
   );
 }
 
-// Circle Visualization Component - Packed like Twitter Circles
+// Circle Visualization - Simple fixed layout like Twitter Circles
 function CircleViz({ data }: { data: CircleData }) {
-  const centerSize = 72;
-  const avatarGap = 2;
-
-  const innerCount = data.innerCircle.length || 5;
-  const middleCount = data.middleCircle.length || 7;
-  const outerCount = data.outerCircle.length || 8;
-
-  // Inner ring: avatar size calculated so they pack tightly around center
-  // circumference = 2π × (centerSize/2 + gap + avatarSize/2)
-  // For packed: innerCount × (avatarSize + gap) = circumference
-  // Solve for avatarSize given minimum inner radius
-  const minInnerRadius = centerSize / 2 + 8;
-  const innerCircumference = 2 * Math.PI * (minInnerRadius + 30);
-  const innerAvatarSize = Math.min(64, Math.max(48, (innerCircumference / innerCount) - avatarGap));
-  const innerRadius = (innerCount * (innerAvatarSize + avatarGap)) / (2 * Math.PI);
-
-  // Middle: same size, Outer: BIGGER to fill space with fewer profiles
-  const middleAvatarSize = innerAvatarSize;
-  const middleRadius = innerRadius + innerAvatarSize / 2 + avatarGap + middleAvatarSize / 2;
-
-  const outerAvatarSize = innerAvatarSize + 8; // BIGGER outer avatars
-  const outerRadius = middleRadius + middleAvatarSize / 2 + avatarGap + outerAvatarSize / 2;
-
-  const size = Math.ceil((outerRadius + outerAvatarSize / 2 + 12) * 2);
+  // FIXED sizes - no dynamic calculation
+  const size = 380;
   const center = size / 2;
+  
+  // Center avatar
+  const centerSize = 80;
+  
+  // FIXED ring radii - evenly spaced
+  const innerRadius = 70;    // First ring
+  const middleRadius = 125;  // Second ring  
+  const outerRadius = 175;   // Third ring (close to edge)
+  
+  // Avatar sizes - OUTER IS BIGGER to fill space
+  const innerAvatarSize = 50;
+  const middleAvatarSize = 54;
+  const outerAvatarSize = 58;  // Biggest!
 
   const placeInCircle = (users: User[], radius: number, avatarSz: number, startAngle = -Math.PI / 2) => {
     return users.map((user, i) => {
@@ -377,21 +368,21 @@ function CircleViz({ data }: { data: CircleData }) {
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
-      {/* Outer circle - offset to stagger */}
-      {placeInCircle(data.outerCircle, outerRadius, outerAvatarSize, -Math.PI/2 + Math.PI/outerCount)}
+      {/* Outer circle - offset by half to stagger */}
+      {placeInCircle(data.outerCircle, outerRadius, outerAvatarSize, -Math.PI/2 + Math.PI/Math.max(data.outerCircle.length, 1))}
 
-      {/* Middle circle */}
-      {placeInCircle(data.middleCircle, middleRadius, middleAvatarSize)}
+      {/* Middle circle - no offset */}
+      {placeInCircle(data.middleCircle, middleRadius, middleAvatarSize, -Math.PI/2)}
 
-      {/* Inner circle - offset to stagger */}
-      {placeInCircle(data.innerCircle, innerRadius, innerAvatarSize, -Math.PI/2 + Math.PI/innerCount)}
+      {/* Inner circle - offset by half to stagger */}
+      {placeInCircle(data.innerCircle, innerRadius, innerAvatarSize, -Math.PI/2 + Math.PI/Math.max(data.innerCircle.length, 1))}
 
       {/* Center user */}
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
         <img
           src={data.mainUser.pfp_url}
           alt={data.mainUser.username}
-          className="rounded-full border-3 border-white shadow-lg"
+          className="rounded-full border-4 border-white shadow-lg"
           style={{ width: centerSize, height: centerSize }}
           onError={(e) => {
             e.currentTarget.src = `https://api.dicebear.com/7.x/shapes/svg?seed=${data.mainUser.username}`;
