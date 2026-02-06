@@ -149,7 +149,7 @@ export default function FarcasterCircles() {
 
   // Mint NFT using Farcaster wallet (for mini apps)
   const mintCircle = async () => {
-    if (!data || !circleRef.current) {
+    if (!data) {
       setError('Generate a circle first');
       return;
     }
@@ -159,48 +159,21 @@ export default function FarcasterCircles() {
     setMintSuccess(null);
 
     try {
-      // Get Farcaster context
-      const context = await sdk.context;
-      
-      if (!context?.user?.fid) {
-        setError('Please open this in Warpcast');
-        setIsMinting(false);
-        return;
-      }
-
-      // Capture the circle as image
-      const circleImage = await captureImage();
-      if (!circleImage) {
-        setError('Failed to capture image');
-        setIsMinting(false);
-        return;
-      }
-
-      // Upload image and create metadata
+      // Create simple metadata with placeholder image
       const metadata = {
         name: `Farcaster Circle - @${data.mainUser.username}`,
-        description: `Social circle visualization for @${data.mainUser.username} on Farcaster`,
+        description: `Social circle visualization for @${data.mainUser.username} on Farcaster. Inner: ${data.innerCircle.length}, Middle: ${data.middleCircle.length}, Outer: ${data.outerCircle.length} friends.`,
+        image: data.mainUser.pfp_url || `https://api.dicebear.com/7.x/shapes/svg?seed=${data.mainUser.username}`,
         attributes: [
           { trait_type: 'Username', value: data.mainUser.username },
           { trait_type: 'Inner Circle', value: data.innerCircle.length },
           { trait_type: 'Middle Circle', value: data.middleCircle.length },
           { trait_type: 'Outer Circle', value: data.outerCircle.length },
+          { trait_type: 'Total Friends', value: data.innerCircle.length + data.middleCircle.length + data.outerCircle.length },
         ],
       };
 
-      const uploadRes = await fetch('/api/upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: circleImage, metadata }),
-      });
-
-      if (!uploadRes.ok) {
-        setError('Failed to upload image');
-        setIsMinting(false);
-        return;
-      }
-
-      const { metadataUri } = await uploadRes.json();
+      const metadataUri = `data:application/json;base64,${btoa(JSON.stringify(metadata))}`;
 
       // Get Farcaster wallet provider
       const provider = sdk.wallet.ethProvider;
